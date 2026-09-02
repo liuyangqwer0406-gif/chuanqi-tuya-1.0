@@ -130,9 +130,9 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
     if (horizontalLine) loaderIntroTimeline.current.to(horizontalLine, { scaleX: 1, duration: .66 }, .06);
     if (meta) loaderIntroTimeline.current.to(meta, { autoAlpha: 1, y: 0, duration: .42 }, .1);
     loaderIntroTimeline.current
-      .to([axis, status, footer].filter(Boolean), { autoAlpha: 1, y: 0, duration: .34, stagger: .04 }, .15)
-      .call(() => setLoaderPhase(1), [], .28)
-      .call(() => setLoaderPhase(2), [], .58);
+      .to([axis, status, footer].filter(Boolean), { autoAlpha: 1, y: 0, duration: .42, stagger: .045 }, .18)
+      .call(() => setLoaderPhase(1), [], .48)
+      .call(() => setLoaderPhase(2), [], .96);
 
     if (scan) gsap.to(scan, { xPercent: 520, duration: .9, ease: "none", repeat: -1 });
     if (beacon) gsap.to(beacon, { autoAlpha: .24, scale: .72, duration: .46, ease: "sine.inOut", repeat: -1, yoyo: true });
@@ -212,7 +212,7 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
     const horizontalLine = loader.querySelector<HTMLElement>(".synthesis-loader__line--horizontal");
     const supportingCopy = [titleNote, meta, status, footer].filter((item): item is HTMLElement => Boolean(item));
     const elapsed = (performance.now() - loaderStartedAt.current) / 1000;
-    const hold = Math.max(0, .42 - elapsed);
+    const hold = Math.max(0, .68 - elapsed);
 
     gsap.killTweensOf([scan, beacon].filter(Boolean));
     loaderExitTimeline.current = gsap.timeline({ delay: hold, defaults: { overwrite: "auto" } });
@@ -304,7 +304,7 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
   }, [applyRoutePhase, contextSafe]);
 
   useEffect(() => {
-    const fallback = window.setTimeout(() => setLoaded(true), 1200);
+    const fallback = window.setTimeout(() => setLoaded(true), 1800);
     return () => window.clearTimeout(fallback);
   }, []);
 
