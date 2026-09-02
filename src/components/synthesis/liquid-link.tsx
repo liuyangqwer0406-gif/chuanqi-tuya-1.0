@@ -51,7 +51,7 @@ export function LiquidLink({
 
   const syncActivity = useCallback((deferInactive = false) => {
     window.clearTimeout(activityTimer.current);
-    const nextActive = !reducedMotion() && intersects.current && document.visibilityState !== "hidden" && (hovered.current || focused.current);
+    const nextActive = !reducedMotion() && intersects.current && document.visibilityState !== "hidden";
     const apply = () => {
       active.current = nextActive;
       send({ type: "activity", value: nextActive });
