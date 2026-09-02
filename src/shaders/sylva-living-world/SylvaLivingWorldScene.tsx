@@ -1610,8 +1610,11 @@ export function applyBlackEmberVariant(source: string) {
       "'  vec3 col = mix(vec3(0.30, 0.72, 0.46), vec3(0.86, 1.00, 0.90), rim);',",
       "'  vec3 col = mix(vec3(0.98, 0.18, 0.025), vec3(1.00, 0.90, 0.70), rim);',",
       "signal orange scan light",
+    [
+      "renderer.toneMappingExposure = 1.30;",
+      "renderer.toneMappingExposure = 1.36;",
+      "ember exposure",
     ],
-    ["renderer.toneMappingExposure = 1.30;", "renderer.toneMappingExposure = 1.36;", "ember exposure"],
   ];
 
   return replacements.reduce(
@@ -1620,22 +1623,24 @@ export function applyBlackEmberVariant(source: string) {
   );
 }
 
-function buildSceneDocument(reducedMotion: boolean, variant: SylvaLivingWorldVariant) {
+function buildSceneDocument(reducedMotion: boolean, variant: SylvaLivingWorldVariant, basePath: string = "") {
   const canonicalSource = innerGreenSource.replace(/\r\n?/g, "\n");
   const presentationStart = canonicalSource.indexOf('<main class="hero" id="hero">');
   const runtimeStart = canonicalSource.indexOf('<script src="inner-green-assets/three.min.js"></script>');
 
-
   if (presentationStart < 0 || runtimeStart < 0 || runtimeStart <= presentationStart) {
     throw new Error("Sylva scene adapter could not isolate the authored Three.js scene.");
   }
+  const cleanPrefix = basePath ? `/${basePath.replace(/^\/+|\/+$/g, "")}` : "";
+  const sylvaBase = `${cleanPrefix}/synthesis/sylva/`;
+  const threeRuntimeSrc = `${cleanPrefix}/synthesis/sylva/inner-green-assets/three.min.js`;
 
   let documentSource = `${canonicalSource.slice(0, presentationStart)}${SCENE_ONLY_MARKUP(VARIANT_LABELS[variant])}\n\n${canonicalSource.slice(runtimeStart)}`
     .replace("<title>Sylva — Into the living world</title>", `<title>${VARIANT_LABELS[variant]}</title>`)
-    .replace("</head>", `<base href="/synthesis/sylva/">${SCENE_ONLY_STYLE}${VARIANT_STYLES[variant] ?? ""}</head>`)
+    .replace("</head>", `<base href="${sylvaBase}">${SCENE_ONLY_STYLE}${VARIANT_STYLES[variant] ?? ""}</head>`)
     .replace(
       '<script src="inner-green-assets/three.min.js"></script>',
-      '<script data-threeui-three-runtime src="/synthesis/sylva/inner-green-assets/three.min.js"></script>',
+      `<script data-threeui-three-runtime src="${threeRuntimeSrc}"></script>`,
     );
 
   if (variant === "black-ember") documentSource = applyBlackEmberVariant(documentSource);
@@ -1715,7 +1720,13 @@ export function SylvaLivingWorldScene({
     return () => media.removeEventListener("change", update);
   }, []);
 
-  const source = useMemo(() => buildSceneDocument(reducedMotion, safeVariant), [reducedMotion, safeVariant]);
+  const basePath = typeof window !== "undefined"
+    ? (window.location.pathname.startsWith("/chuanqi-tuya-1.0")
+        ? "/chuanqi-tuya-1.0"
+        : (window.location.pathname.startsWith("/legendary-doodle1.0") ? "/legendary-doodle1.0" : ""))
+    : "";
+
+  const source = useMemo(() => buildSceneDocument(reducedMotion, safeVariant, basePath), [reducedMotion, safeVariant, basePath]);
   const sceneActive = active && hostVisible && documentVisible;
   const mounted = true;
   const label = VARIANT_LABELS[safeVariant];

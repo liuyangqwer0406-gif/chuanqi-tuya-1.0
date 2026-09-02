@@ -178,11 +178,18 @@ export function LiquidLink({
     }
   };
 
+  const basePath = typeof window !== "undefined"
+    ? (window.location.pathname.startsWith("/chuanqi-tuya-1.0")
+        ? "/chuanqi-tuya-1.0"
+        : (window.location.pathname.startsWith("/legendary-doodle1.0") ? "/legendary-doodle1.0" : ""))
+    : "";
+
   return (
     <TransitionLink
       ref={host}
-      className={`liquid-link liquid-link--${variant} ${ready ? "is-shader-ready" : ""} ${className}`}
       href={href}
+      className={`liquid-link liquid-link--${variant}${className ? ` ${className}` : ""}`}
+      data-state={ready ? "ready" : "loading"}
       aria-label={ariaLabel}
       onPointerEnter={handlePointerEnter}
       onPointerMove={handlePointerMove}
@@ -198,7 +205,7 @@ export function LiquidLink({
       <iframe
         ref={frame}
         className="liquid-link__shader"
-        src={`/synthesis/liquid-metal-button.html?v=signal-orange-3${variant === "orb" ? "&shape=orb" : ""}`}
+        src={`${basePath}/synthesis/liquid-metal-button.html?v=signal-orange-3${variant === "orb" ? "&shape=orb" : ""}`}
         title=""
         aria-hidden="true"
         tabIndex={-1}
