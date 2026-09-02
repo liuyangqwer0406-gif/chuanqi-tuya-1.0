@@ -1621,14 +1621,15 @@ export function applyBlackEmberVariant(source: string) {
 }
 
 function buildSceneDocument(reducedMotion: boolean, variant: SylvaLivingWorldVariant) {
-  const presentationStart = innerGreenSource.indexOf('<main class="hero" id="hero">');
-  const runtimeStart = innerGreenSource.indexOf('<script src="inner-green-assets/three.min.js"></script>');
+  const canonicalSource = innerGreenSource.replace(/\r\n?/g, "\n");
+  const presentationStart = canonicalSource.indexOf('<main class="hero" id="hero">');
+  const runtimeStart = canonicalSource.indexOf('<script src="inner-green-assets/three.min.js"></script>');
 
   if (presentationStart < 0 || runtimeStart < 0 || runtimeStart <= presentationStart) {
     throw new Error("Sylva scene adapter could not isolate the authored Three.js scene.");
   }
 
-  let documentSource = `${innerGreenSource.slice(0, presentationStart)}${SCENE_ONLY_MARKUP(VARIANT_LABELS[variant])}\n\n${innerGreenSource.slice(runtimeStart)}`
+  let documentSource = `${canonicalSource.slice(0, presentationStart)}${SCENE_ONLY_MARKUP(VARIANT_LABELS[variant])}\n\n${canonicalSource.slice(runtimeStart)}`
     .replace("<title>Sylva — Into the living world</title>", `<title>${VARIANT_LABELS[variant]}</title>`)
     .replace("</head>", `${SCENE_ONLY_STYLE}${VARIANT_STYLES[variant] ?? ""}</head>`)
     .replace(
