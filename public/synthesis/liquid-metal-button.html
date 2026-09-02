@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Liquid Metal Button</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -337,8 +340,7 @@ void main(){
 
   // rgb is premultiplied by the mask and alpha carries it, so the blur that
   // follows can normalise and keep a clean edge instead of a dark vignette
-  float effHover = mix(0.46, 1.0, uHover);
-  if(pill <= 0.0015){ o = vec4(0., 0., 0., pill); return; }
+  if(uHover <= 0.0015 || pill <= 0.0015){ o = vec4(0., 0., 0., pill); return; }
 
   vec2  p = vec2(d.x, -d.y) / S;          // gl_FragCoord is y-up
   vec2  q = p + pointerWarp(p);           // the cursor drags the sheet
@@ -386,7 +388,7 @@ void main(){
   // legible through the softening blur and across the unlit part of the pill
   col = col * (1. + rip * 1.15 + well * 0.60);
 
-  o = vec4(col * pill * effHover, pill);
+  o = vec4(col * pill * uHover, pill);
 }`;
 
 /* Downsample; optionally adding a second source (used to fold the rim into
@@ -653,7 +655,6 @@ function drawTo(t){
 const uArr = new Float32Array(PKEYS.length);
 const eArr = new Float32Array(EKEYS.length);
 let hover = 0, hoverTarget = 0, clock = 0, last = performance.now();
-let running = true, frameId = 0;
 
 // three ripple slots, reused round-robin so rapid taps overlap
 const RIP = [0,1,2].map(() => ({x:0, y:0, t:-99, on:0}));
@@ -680,7 +681,6 @@ const calm = matchMedia('(prefers-reduced-motion: reduce)');
 let drawn = null;                  // signature of the last frame actually drawn
 
 function frame(now){
-  if(!running) return;
   const dtRaw = (now - last) / 1000; last = now;
   const dt = Math.min(dtRaw, 1/20);
   if(!calm.matches) clock += dt;
@@ -718,7 +718,7 @@ function frame(now){
   // reduced motion with nothing in flight.
   const sig = (calm.matches && !ripLive && ptrAmt < 0.002)
     ? `${hover}|${press}|${W}|${H}` : null;
-  if(sig !== null && sig === drawn){ scheduleFrame(); return; }
+  if(sig !== null && sig === drawn){ requestAnimationFrame(frame); return; }
   drawn = sig;
 
   for(let i = 0; i < uArr.length; i++) uArr[i] = P[PKEYS[i]];
@@ -823,30 +823,8 @@ function frame(now){
   gl.uniform1f(pComp.u.uPunch, C.punch);
   drawTo(null);
 
-  scheduleFrame();
+  requestAnimationFrame(frame);
 }
-
-function scheduleFrame(){
-  if(!running || frameId) return;
-  frameId = requestAnimationFrame((now) => {
-    frameId = 0;
-    frame(now);
-  });
-}
-
-window.__activity = (value) => {
-  const nextRunning = !!value;
-  if(nextRunning === running) return;
-  running = nextRunning;
-  if(!running){
-    if(frameId) cancelAnimationFrame(frameId);
-    frameId = 0;
-    return;
-  }
-  last = performance.now();
-  drawn = null;
-  scheduleFrame();
-};
 
 /* ---------------- interaction ----------------
    Hover, press and focus all light the metal; press additionally throws a
@@ -900,7 +878,7 @@ btn.addEventListener('keyup', e => {
 });
 
 resize();
-scheduleFrame();
+requestAnimationFrame(frame);
 
 // tiny console hooks for tuning
 window.__set = (o = {}, e = {}, c = {}, r = {}) => {
@@ -912,87 +890,6 @@ window.__press  = v => { on.press = !!v; sync(); if(v) addRipple(0, 0); };
 window.__ripple = (x = 0, y = 0) => addRipple(x, y);
 window.__seek   = v => { clock = v; drawn = null; };
 }
-</script>
-<script>
-/* Portfolio adapter: keep the source shader intact and expose only a visual,
-   sandboxed layer. The semantic link and navigation remain in the parent. */
-(() => {
-  const shape = new URLSearchParams(location.search).get('shape');
-  if(shape === 'orb') document.body.dataset.shape = 'orb';
-
-  const adapterStyle = document.createElement('style');
-  adapterStyle.textContent = `
-    html,body{width:100%;height:100%;background:transparent!important}
-    body{display:grid;place-items:center}
-    .stage{
-      --h:calc(100vh - 2px)!important;
-      --bw:calc(100vw - 2px)!important;
-      --pad:calc(220 * var(--u))!important;
-      position:absolute;
-      top:50%;
-      left:50%;
-      transform:translate(-50%,-50%);
-      pointer-events:none;
-    }
-    .plate{background:#100704!important;box-shadow:none!important}
-    body.hot .plate{background:#170803!important}
-    body.press .plate{background:#0b0503!important}
-    .btn{pointer-events:none!important}
-    .btn .ico,.btn .lbl{display:none!important}
-    body[data-shape="orb"] .stage{
-      --bw:var(--h)!important;
-      --pad:calc(260 * var(--u))!important;
-    }
-    body[data-shape="orb"] .plate,
-    body[data-shape="orb"] .btn{border-radius:50%!important}
-  `;
-  document.head.appendChild(adapterStyle);
-  if(typeof window.__set !== 'function') {
-    document.body.textContent = '';
-    parent.postMessage({ liquidMetalLink: { type: 'ready', fallback: true } }, '*');
-    return;
-  }
-  btn.tabIndex = -1;
-
-  window.__set(
-    { disp: 0.20, gain: 2.05, dim: 0.30 },
-    { base: 0.18, hot: 0.92, chromA: 0.26, chromS: 0.016, speed: 0.055 },
-    { glow: 1.72, glowR: 0.92, glowIn: 0.36, soften: 0.20, punch: 1.36 },
-    { ptrRad: 0.48, ptrAmp: 0.28, ptrFast: 0.34, ptrRim: 0.92 }
-  );
-
-  const emitPointer = (target, type, data = {}) => {
-    target.dispatchEvent(new PointerEvent(type, {
-      bubbles: true,
-      clientX: Number(data.x) || 0,
-      clientY: Number(data.y) || 0,
-      pointerId: Number(data.pointerId) || 1,
-      pointerType: data.pointerType || 'mouse',
-      buttons: Number(data.buttons) || 0
-    }));
-  };
-
-  window.addEventListener('message', event => {
-    if(event.source !== parent) return;
-    const data = event.data && event.data.liquidMetalLink;
-    if(!data) return;
-
-    if(data.type === 'hover') {
-      window.__hover(!!data.value);
-      if(data.value) emitPointer(window, 'pointermove', data);
-    }
-    if(data.type === 'move') emitPointer(window, 'pointermove', data);
-    if(data.type === 'press') {
-      if(data.value) emitPointer(btn, 'pointerdown', data);
-      else emitPointer(window, 'pointerup', data);
-    }
-    if(data.type === 'cancel') emitPointer(window, 'pointercancel', data);
-    if(data.type === 'activity') window.__activity(!!data.value);
-    if(data.type === 'probe') parent.postMessage({ liquidMetalLink: { type: 'ready' } }, '*');
-  });
-
-  parent.postMessage({ liquidMetalLink: { type: 'ready' } }, '*');
-})();
 </script>
 </body>
 </html>
