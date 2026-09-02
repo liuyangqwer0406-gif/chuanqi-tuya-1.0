@@ -3376,8 +3376,8 @@ window.__seek   = v => { clock = v; drawn = null; };
   function build() {
     var narrow = NARROW.matches;
     var small = narrow || (window.innerWidth * window.innerHeight) < 620000;
-    var BLADES_NEAR = small ? 70000 : 190000;
-    var BLADES_FAR  = small ? 20000 :  60000;
+    var BLADES_NEAR = small ? 20000 : 45000;
+    var BLADES_FAR  = small ?  6000 : 14000;
 
     var q = /[?&]blades=(\d+)/.exec(location.search);
     if (q) { BLADES_NEAR = +q[1]; BLADES_FAR = Math.round(+q[1] * 0.21); }
@@ -3416,7 +3416,7 @@ window.__seek   = v => { clock = v; drawn = null; };
 
     nearGroup = assembleRoot(nearLimbs, {
       aspect: ARCH.aspect, haze: 0.15, fog: 0.0, alpha: 1.0, order: 2,
-      blades: BLADES_NEAR, ferns: small ? 26 : 46, flowers: small ? 120 : 260,
+      blades: BLADES_NEAR, ferns: small ? 16 : 28, flowers: small ? 60 : 140,
       fernSize: [0.22, 0.50], flowerSize: [0.055, 0.118], mainLimbs: mainCount, wire: true,
       mouse: uMouseNear, mouseR: 1.20
     });
@@ -3432,7 +3432,7 @@ window.__seek   = v => { clock = v; drawn = null; };
       /* dimmer air than the near root's: at 0.46 of the pale tone the ridge
          lost its silhouette entirely and read as a smudge on the background */
       hazeCol: [0.150, 0.164, 0.120], hazeLift: 0.92,
-      blades: BLADES_FAR, ferns: small ? 8 : 16, flowers: small ? 40 : 90,
+      blades: BLADES_FAR, ferns: small ? 6 : 10, flowers: small ? 24 : 50,
       fernSize: [0.26, 0.56], flowerSize: [0.034, 0.062],
       mask: [0.4, 3.4, 0.0, 0.42], wire: true,
       mouse: uMouseFar, mouseR: 1.4
