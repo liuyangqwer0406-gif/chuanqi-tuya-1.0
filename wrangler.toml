@@ -1,0 +1,8 @@
+# Cloudflare Deployment Configuration
+name = "chuanqi-tuya"
+compatibility_date = "2026-09-02"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".next"
+
+# Your Cloudflare Account ID
+account_id = "eae9a1cf67acfe3bfc73912ef805344d"
