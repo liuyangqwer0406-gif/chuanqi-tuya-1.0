@@ -59,6 +59,11 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
   const [routeFieldOrigin, setRouteFieldOrigin] = useState<readonly [number, number]>([0.5, 0.5]);
   const [routeFieldPulse, setRouteFieldPulse] = useState(0);
   const [homeSceneActive, setHomeSceneActive] = useState(isHome);
+  const [prevIsHome, setPrevIsHome] = useState(isHome);
+  if (prevIsHome !== isHome) {
+    setPrevIsHome(isHome);
+    setHomeSceneActive(isHome);
+  }
   const loaderNode = useRef<HTMLDivElement>(null);
   const loaderIntroTimeline = useRef<gsap.core.Timeline | null>(null);
   const loaderExitTimeline = useRef<gsap.core.Timeline | null>(null);
@@ -315,7 +320,6 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
   }, [loaded, routeFieldMounted]);
 
   useEffect(() => {
-    setHomeSceneActive(isHome);
     if (!isHome) return;
 
     const hero = document.querySelector(".synthesis-hero");

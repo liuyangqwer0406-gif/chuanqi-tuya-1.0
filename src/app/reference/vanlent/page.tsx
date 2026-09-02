@@ -138,6 +138,7 @@ export default function VanLentReferencePage() {
 
           <div className="ref-workbench">
             <div className="ref-project-image" key={`image-${project.name}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={project.image} alt={project.alt} />
               <div className="ref-image-index" aria-hidden="true">0{projectIndex + 1} / 0{projects.length}</div>
             </div>
@@ -229,6 +230,7 @@ export default function VanLentReferencePage() {
         <div className="ref-sticky ref-about-stage">
           <div className="ref-about-index"><span>03</span> ABOUT</div>
           <div className="ref-about-portrait">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`${ASSET_ROOT}/me-w828.webp`} alt="Portrait of Tim van Lent" />
           </div>
           <div className="ref-about-copy">

@@ -338,9 +338,8 @@ void main(){
   float S = uHalf.y * 2.;                 // button height, device px
   float t = uT;
 
-  // rgb is premultiplied by the mask and alpha carries it, so the blur that
-  // follows can normalise and keep a clean edge instead of a dark vignette
-  if(uHover <= 0.0015 || pill <= 0.0015){ o = vec4(0., 0., 0., pill); return; }
+  if(pill <= 0.0015){ o = vec4(0., 0., 0., 0.); return; }
+  float effHover = max(0.36, uHover);
 
   vec2  p = vec2(d.x, -d.y) / S;          // gl_FragCoord is y-up
   vec2  q = p + pointerWarp(p);           // the cursor drags the sheet
@@ -388,7 +387,7 @@ void main(){
   // legible through the softening blur and across the unlit part of the pill
   col = col * (1. + rip * 1.15 + well * 0.60);
 
-  o = vec4(col * pill * uHover, pill);
+  o = vec4(col * pill * effHover, pill);
 }`;
 
 /* Downsample; optionally adding a second source (used to fold the rim into

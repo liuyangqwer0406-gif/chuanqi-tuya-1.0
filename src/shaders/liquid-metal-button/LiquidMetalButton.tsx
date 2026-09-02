@@ -165,6 +165,11 @@ export function LiquidMetalButton({
   const intersectsRef = useRef(true);
   const [mounted, setMounted] = useState(true);
   const [ready, setReady] = useState(false);
+  const [prevMounted, setPrevMounted] = useState(mounted);
+  if (prevMounted !== mounted) {
+    setPrevMounted(mounted);
+    if (!mounted) setReady(false);
+  }
   const safeVariant: LiquidMetalButtonVariant =
     variant === "circle" || variant === "play" ? variant : "pill";
   const isPlayButton = safeVariant === "play";
@@ -177,12 +182,12 @@ export function LiquidMetalButton({
     () => isPlayButton ? liquidMetalPlayButtonSource : sourceForVariant(safeVariant),
     [isPlayButton, safeVariant],
   );
-  const playConfig = {
+  const playConfig = useMemo(() => ({
     diameter: clamp(diameter, 72, 160, 88),
     strokeWidth: clamp(strokeWidth, 1, 8, 3),
     rendering,
     text: safeText,
-  } as const;
+  } as const), [diameter, strokeWidth, rendering, safeText]);
 
   const syncButtonConfig = useCallback(() => {
     frameRef.current?.contentWindow?.postMessage({
@@ -193,7 +198,7 @@ export function LiquidMetalButton({
   const syncPlayConfig = useCallback(() => {
     if (!isPlayButton) return;
     frameRef.current?.contentWindow?.postMessage({ liquidMetalPlayButton: playConfig }, "*");
-  }, [isPlayButton, playConfig.diameter, playConfig.rendering, playConfig.strokeWidth, playConfig.text]);
+  }, [isPlayButton, playConfig]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -212,10 +217,6 @@ export function LiquidMetalButton({
       document.removeEventListener("visibilitychange", sync);
     };
   }, []);
-
-  useEffect(() => {
-    if (!mounted) setReady(false);
-  }, [mounted]);
 
   useEffect(() => {
     if (!ready) return;
