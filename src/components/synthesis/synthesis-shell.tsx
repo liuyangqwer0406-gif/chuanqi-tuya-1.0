@@ -45,8 +45,8 @@ const ignoreRouteFieldStatus = () => undefined;
 
 export function SynthesisShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHome = pathname === "/synthesis";
-  const isAbout = pathname === "/synthesis/about";
+  const isHome = pathname === "/" || pathname === "/synthesis";
+  const isAbout = pathname === "/synthesis/about" || pathname === "/about";
   const [loaded, setLoaded] = useState(false);
   const [loaderPhase, setLoaderPhase] = useState(0);
   const [routePhase, setRoutePhase] = useState<RoutePhase>("idle");
@@ -314,6 +314,7 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
   }, [loaded, routeFieldMounted]);
 
   useEffect(() => {
+    setHomeSceneActive(isHome);
     if (!isHome) return;
 
     const hero = document.querySelector(".synthesis-hero");

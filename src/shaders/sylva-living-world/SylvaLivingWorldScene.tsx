@@ -1625,13 +1625,14 @@ function buildSceneDocument(reducedMotion: boolean, variant: SylvaLivingWorldVar
   const presentationStart = canonicalSource.indexOf('<main class="hero" id="hero">');
   const runtimeStart = canonicalSource.indexOf('<script src="inner-green-assets/three.min.js"></script>');
 
+
   if (presentationStart < 0 || runtimeStart < 0 || runtimeStart <= presentationStart) {
     throw new Error("Sylva scene adapter could not isolate the authored Three.js scene.");
   }
 
   let documentSource = `${canonicalSource.slice(0, presentationStart)}${SCENE_ONLY_MARKUP(VARIANT_LABELS[variant])}\n\n${canonicalSource.slice(runtimeStart)}`
     .replace("<title>Sylva — Into the living world</title>", `<title>${VARIANT_LABELS[variant]}</title>`)
-    .replace("</head>", `${SCENE_ONLY_STYLE}${VARIANT_STYLES[variant] ?? ""}</head>`)
+    .replace("</head>", `<base href="/synthesis/sylva/">${SCENE_ONLY_STYLE}${VARIANT_STYLES[variant] ?? ""}</head>`)
     .replace(
       '<script src="inner-green-assets/three.min.js"></script>',
       '<script data-threeui-three-runtime src="/synthesis/sylva/inner-green-assets/three.min.js"></script>',

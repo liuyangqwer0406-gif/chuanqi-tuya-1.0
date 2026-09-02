@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -83,12 +84,14 @@ export function SynthesisHome() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  const pathname = usePathname();
+
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!criticalCoverReady || (!sceneReady && !sceneFallback && !reduced) || routeReadyAnnounced.current) return;
     routeReadyAnnounced.current = true;
-    announceSynthesisRouteReady("/synthesis", !sceneReady);
-  }, [criticalCoverReady, sceneReady, sceneFallback]);
+    announceSynthesisRouteReady(pathname || "/", !sceneReady);
+  }, [criticalCoverReady, sceneReady, sceneFallback, pathname]);
 
   const selectProject = useCallback((index: number, animate = true) => {
     if (index === activeRef.current) return;
