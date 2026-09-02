@@ -7,6 +7,7 @@ import type {
   ReactNode,
 } from "react";
 import { TransitionLink } from "./transition-link";
+import { assetPath } from "@/lib/assets";
 
 type LiquidLinkProps = {
   href: string;
@@ -178,11 +179,7 @@ export function LiquidLink({
     }
   };
 
-  const basePath = typeof window !== "undefined"
-    ? (window.location.pathname.startsWith("/chuanqi-tuya-1.0")
-        ? "/chuanqi-tuya-1.0"
-        : (window.location.pathname.startsWith("/legendary-doodle1.0") ? "/legendary-doodle1.0" : ""))
-    : "";
+  const buttonSrc = assetPath(`/synthesis/liquid-metal-button.html?v=signal-orange-3${variant === "orb" ? "&shape=orb" : ""}`);
 
   return (
     <TransitionLink
@@ -205,11 +202,11 @@ export function LiquidLink({
       <iframe
         ref={frame}
         className="liquid-link__shader"
-        src={`${basePath}/synthesis/liquid-metal-button.html?v=signal-orange-3${variant === "orb" ? "&shape=orb" : ""}`}
+        src={buttonSrc}
         title=""
         aria-hidden="true"
         tabIndex={-1}
-        sandbox="allow-scripts"
+        sandbox="allow-scripts allow-same-origin"
         loading="lazy"
         onLoad={() => {
           setReady(true);

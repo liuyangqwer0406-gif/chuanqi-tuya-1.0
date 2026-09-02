@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { getBasePath } from "@/lib/assets";
 
 import innerGreenSource from "./sources/inner-green-3d.html?raw";
 
@@ -1721,11 +1722,7 @@ export function SylvaLivingWorldScene({
     return () => media.removeEventListener("change", update);
   }, []);
 
-  const basePath = typeof window !== "undefined"
-    ? (window.location.pathname.startsWith("/chuanqi-tuya-1.0")
-        ? "/chuanqi-tuya-1.0"
-        : (window.location.pathname.startsWith("/legendary-doodle1.0") ? "/legendary-doodle1.0" : ""))
-    : "";
+  const basePath = getBasePath();
 
   const source = useMemo(() => buildSceneDocument(reducedMotion, safeVariant, basePath), [reducedMotion, safeVariant, basePath]);
   const sceneActive = active && hostVisible && documentVisible;
@@ -1761,7 +1758,7 @@ export function SylvaLivingWorldScene({
           key={`${safeVariant}-${reducedMotion ? "reduced" : "motion"}`}
           title={label}
           srcDoc={source}
-          sandbox="allow-scripts"
+          sandbox="allow-scripts allow-same-origin"
           loading="eager"
           onLoad={() => {
             setReady(true);

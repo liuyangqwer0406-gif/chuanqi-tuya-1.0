@@ -45,8 +45,9 @@ const ignoreRouteFieldStatus = () => undefined;
 
 export function SynthesisShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHome = pathname === "/" || pathname === "/synthesis";
-  const isAbout = pathname === "/synthesis/about" || pathname === "/about";
+  const normalizedPath = (pathname || "/").replace(/^\/(legendary-doodle1\.0|chuanqi-tuya-1\.0)/, "");
+  const isHome = normalizedPath === "" || normalizedPath === "/" || normalizedPath === "/synthesis" || normalizedPath === "/synthesis/";
+  const isAbout = normalizedPath === "/synthesis/about" || normalizedPath === "/synthesis/about/" || normalizedPath === "/about";
   const [loaded, setLoaded] = useState(false);
   const [loaderPhase, setLoaderPhase] = useState(0);
   const [routePhase, setRoutePhase] = useState<RoutePhase>("idle");
