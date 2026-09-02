@@ -1610,6 +1610,7 @@ export function applyBlackEmberVariant(source: string) {
       "'  vec3 col = mix(vec3(0.30, 0.72, 0.46), vec3(0.86, 1.00, 0.90), rim);',",
       "'  vec3 col = mix(vec3(0.98, 0.18, 0.025), vec3(1.00, 0.90, 0.70), rim);',",
       "signal orange scan light",
+    ],
     [
       "renderer.toneMappingExposure = 1.30;",
       "renderer.toneMappingExposure = 1.36;",
