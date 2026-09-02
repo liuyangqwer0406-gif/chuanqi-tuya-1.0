@@ -436,7 +436,7 @@ void main(){
 const FRAG_COMP = HEAD + `
 uniform sampler2D uSoft, uRim, uGlow;
 uniform vec2  uRes;
-uniform float uGlowGain, uGlowIn, uOccl, uDim, uPunch;
+uniform float uGlowGain, uGlowIn, uOccl, uDim, uPunch, uThemeOrange;
 
 void main(){
   vec2 uv = gl_FragCoord.xy / uRes;
@@ -451,35 +451,46 @@ void main(){
   vec4 m = texture(uSoft, uv);
 
   // Scrim, applied *after* the blur: knock the metal back through the middle
-  // where the label sits, leaving the top and bottom at full brightness.  Doing
-  // this before the blur would smear the protection away at high blur values.
+  // where the label sits, leaving the top and bottom at full brightness.
   float veil = 1. - smoothstep(0.46, 0.88, abs(d.y) / uHalf.y);
 
   // Blurring flattens the tonal range into a wash; putting the contrast back
-  // with a power curve — after the blur, so it costs no smoothness — is what
-  // makes it read as poured metal rather than a soft glow.  Highlights keep
-  // their level while the mid-tones drop away.
+  // with a power curve makes it read as poured metal rather than a soft glow.
   vec3 metal = pow(max(m.rgb / max(m.a, 1e-3), 0.), vec3(uPunch));
 
-  vec3 core = metal * pill * mix(1., uDim, veil) + texture(uRim, uv).rgb;
+  // Signal Orange theme palette (anchored to site's --color-signal: oklch(68% 0.21 38) #ff5500)
+  float lum = dot(metal, vec3(0.299, 0.587, 0.114));
+  vec3 cDark  = vec3(0.12, 0.02, 0.002);
+  vec3 cMid   = vec3(1.00, 0.34, 0.03);  // Electric Signal Orange
+  vec3 cHot   = vec3(1.00, 0.82, 0.36);  // Golden incandescent
+  vec3 cWhite = vec3(1.00, 0.96, 0.88);  // Specular flash
+  vec3 orangeGrad = mix(cDark, cMid, smoothstep(0.01, 0.44, lum));
+  orangeGrad = mix(orangeGrad, cHot, smoothstep(0.44, 0.90, lum));
+  orangeGrad = mix(orangeGrad, cWhite, smoothstep(0.90, 1.45, lum));
+  orangeGrad += (metal - vec3(lum)) * 0.18;
+  metal = mix(metal, orangeGrad, uThemeOrange);
 
-  // The ripple's own light is added here, after the blur, so the crease stays
-  // a hard line.  Its displacement of the field still rides inside the
-  // softened metal — the sheet bows, and the crest glints along the fold.
+  vec3 rim = texture(uRim, uv).rgb;
+  float rimLum = dot(rim, vec3(0.299, 0.587, 0.114));
+  vec3 orangeRim = mix(cMid, cHot, smoothstep(0.12, 0.70, rimLum)) * rimLum * 1.35;
+  orangeRim = mix(orangeRim, cWhite, smoothstep(0.70, 1.25, rimLum));
+  rim = mix(rim, orangeRim, uThemeOrange);
+
+  vec3 core = metal * pill * mix(1., uDim, veil) + rim;
+
+  // The ripple's own light
   float rip = ripple(vec2(d.x, -d.y) / (uHalf.y * 2.), uT);
-  core += vec3(rip * rip) * uRipK2.w * pill * mix(1., 0.42, veil);
+  vec3 ripCol = mix(vec3(1.), cHot, uThemeOrange);
+  core += ripCol * (rip * rip * 1.25) * uRipK2.w * pill * mix(1., 0.42, veil);
 
-  // The button occludes its own bloom over the patch where its shadow falls,
-  // so the drop shadow keeps its contrast even when the face is blown out.
+  // The button occludes its own bloom over the patch where its shadow falls
   float sdSh = sdPill(d + vec2(0., uHalf.y * 0.62), uHalf * 0.94, uHalf.y * 0.94);
   float occl = uOccl * exp(-max(sdSh, 0.) / (uHalf.y * 0.75));
 
-  // Bloom spills mostly outward; a little of it is allowed back inside so the
-  // hot rim bleeds onto the face, as it does on the reference component.
-  vec3 rgb = core + glow * uGlowGain * mix(1., uGlowIn, pill) * (1. - occl * (1. - pill));
+  // Bloom with warm signal orange radiance
+  vec3 themedGlow = mix(glow, glow * vec3(1.15, 0.42, 0.05), uThemeOrange);
+  vec3 rgb = core + themedGlow * uGlowGain * mix(1., uGlowIn, pill) * (1. - occl * (1. - pill));
 
-  // premultiplied — the page's ambient pool and the button's drop shadow are
-  // CSS underneath, and this layer adds light on top of them
   float a = clamp(max(rgb.r, max(rgb.g, rgb.b)), 0., 1.);
   o = vec4(min(rgb, vec3(1.)), a);
 }`;
@@ -490,6 +501,10 @@ const gl = cv.getContext('webgl2', {alpha:true, antialias:false, premultipliedAl
 const stage = document.getElementById('stage');
 const btn   = document.getElementById('btn');
 const plate = document.querySelector('.plate');
+
+const themeParam = new URLSearchParams(location.search).get('theme');
+window.__theme = themeParam || 'signal-orange';
+window.__setTheme = (t) => { window.__theme = t; };
 
 // the metal field — uP[0..20]
 const P = window.__P = {
@@ -820,6 +835,7 @@ function frame(now){
   gl.uniform1f(pComp.u.uOccl, C.occl);
   gl.uniform1f(pComp.u.uDim, P.dim);
   gl.uniform1f(pComp.u.uPunch, C.punch);
+  gl.uniform1f(pComp.u.uThemeOrange, (window.__theme === 'silver' || window.__theme === 'mono') ? 0.0 : 1.0);
   drawTo(null);
 
   requestAnimationFrame(frame);

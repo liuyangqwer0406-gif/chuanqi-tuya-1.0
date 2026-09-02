@@ -564,6 +564,11 @@ html[data-route-state="entering"] [data-transition-cover] img { opacity: .86; tr
   opacity: 1;
 }
 
+.liquid-link:hover {
+  border-color: var(--color-signal);
+  box-shadow: 0 0 28px -4px var(--color-signal-glow);
+}
+
 .liquid-link:hover .liquid-link__shader {
   opacity: 1;
 }
