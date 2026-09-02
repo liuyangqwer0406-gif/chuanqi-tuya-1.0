@@ -47,13 +47,15 @@ export type SynthesisProject = {
   closingCn: string;
 };
 
+import { assetPath } from "@/lib/assets";
+
 const image = (
   src: string,
   alt: string,
   caption: string,
   note: string,
   shape?: ProjectImage["shape"],
-): ProjectImage => ({ src: `/portfolio-assets/${src}`, alt, caption, note, shape });
+): ProjectImage => ({ src: assetPath(`portfolio-assets/${src}`), alt, caption, note, shape });
 
 const motionPoster = (
   src: string,
@@ -61,8 +63,8 @@ const motionPoster = (
   caption: string,
   placement: ProjectMotionPoster["placement"],
 ): ProjectMotionPoster => ({
-  src: `/portfolio-assets/dad/motion/${src}.mp4`,
-  poster: `/portfolio-assets/dad/motion/${src}-poster.jpg`,
+  src: assetPath(`portfolio-assets/dad/motion/${src}.mp4`),
+  poster: assetPath(`portfolio-assets/dad/motion/${src}-poster.jpg`),
   alt,
   caption,
   note: "Digital motion study / 10 sec loop",

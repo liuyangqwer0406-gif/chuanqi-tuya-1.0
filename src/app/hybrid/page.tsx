@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import { ParticleOrb } from "@/components/sites/vanlent-dev-4f352424/root-8a5edab2/particle-orb";
 import { SiteShell } from "@/components/sites/vanlent-dev-4f352424/root-8a5edab2/site-shell";
 import type { Capability, Project } from "@/components/sites/vanlent-dev-4f352424/root-8a5edab2/site-types";
+import { assetPath } from "@/lib/assets";
 import "./hybrid.css";
 
 const projects: Project[] = [
@@ -13,7 +14,7 @@ const projects: Project[] = [
     name: "ROKU IKITION",
     discipline: "Brand / Packaging / 3D",
     year: "2025",
-    image: "/portfolio-assets/dad-cover.jpg",
+    image: assetPath("portfolio-assets/dad-cover.jpg"),
     alt: "ROKU IKITION brand and packaging project cover",
     description: "A graphic identity built across packaging, campaign imagery and a three-dimensional product world.",
   },
@@ -22,7 +23,7 @@ const projects: Project[] = [
     name: "PACKAGING DESIGN",
     discipline: "Commercial packaging / Production",
     year: "2026",
-    image: "/portfolio-assets/packaging-cover.jpg",
+    image: assetPath("portfolio-assets/packaging-cover.jpg"),
     alt: "Commercial packaging design project cover",
     description: "Packaging systems shaped for real production constraints, shelf rhythm and clear product communication.",
   },
@@ -32,7 +33,7 @@ const projects: Project[] = [
     secondary: "符文攻防战",
     discipline: "Esports identity",
     year: "2026",
-    image: "/portfolio-assets/thesis-cover.jpg",
+    image: assetPath("portfolio-assets/thesis-cover.jpg"),
     alt: "Runes Attack and Defense esports identity project cover",
     description: "An esports visual system that turns game logic into an expandable identity, motion and event language.",
   },
@@ -42,7 +43,7 @@ const projects: Project[] = [
     secondary: "江口沉银",
     discipline: "Cultural visual / 3D",
     year: "2024",
-    image: "/portfolio-assets/jiangkou-cover-v2.jpg",
+    image: assetPath("portfolio-assets/jiangkou-cover-v2.jpg"),
     alt: "Jiangkou Sunken Silver cultural visual and 3D project cover",
     description: "A cultural image study translating archaeological material into a contemporary three-dimensional narrative.",
   },
@@ -51,7 +52,7 @@ const projects: Project[] = [
     name: "REVERIE",
     discipline: "Immersive web experience",
     year: "2026",
-    image: "/portfolio-assets/reverie-cover.jpg",
+    image: assetPath("portfolio-assets/reverie-cover.jpg"),
     alt: "Reverie immersive web experience project cover",
     description: "An atmospheric web experience where image, typography and restrained interaction move as one system.",
   },
@@ -222,7 +223,7 @@ export default function HybridPage() {
 
       <section className="hybrid-about" id="about" aria-labelledby="about-title">
         <div className="hybrid-about__image">
-          <Image src="/portfolio-assets/about-portrait.webp" alt="Portrait of designer Wen Yifan" fill sizes="(max-width: 720px) 100vw, 50vw" />
+          <Image src={assetPath("portfolio-assets/about-portrait.webp")} alt="Portrait of designer Wen Yifan" fill sizes="(max-width: 720px) 100vw, 50vw" />
           <p>WEN YIFAN / VISUAL DESIGNER</p>
         </div>
         <div className="hybrid-about__copy">

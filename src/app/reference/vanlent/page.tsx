@@ -3,9 +3,10 @@
 import { FormEvent, useState } from "react";
 import { ParticleOrb } from "@/components/sites/vanlent-dev-4f352424/root-8a5edab2/particle-orb";
 import { SiteShell } from "@/components/sites/vanlent-dev-4f352424/root-8a5edab2/site-shell";
+import { assetPath } from "@/lib/assets";
 import "./reference.css";
 
-const ASSET_ROOT = "/sites/vanlent-dev-4f352424/root-8a5edab2/images";
+const ASSET_ROOT = assetPath("sites/vanlent-dev-4f352424/root-8a5edab2/images");
 
 const projects = [
   {

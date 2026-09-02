@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AboutSignalField } from "./about-signal-field";
 import { announceSynthesisRouteReady } from "./route-events";
+import { assetPath } from "@/lib/assets";
 import styles from "./synthesis-about-page.module.css";
 
 const practiceAreas = [
@@ -14,12 +15,12 @@ const practiceAreas = [
 ] as const;
 
 const methodImages = [
-  ["/portfolio-assets/dad/material-ember.jpg", "IDENTITY"],
-  ["/portfolio-assets/packaging-mockup.jpg", "PACKAGING"],
-  ["/portfolio-assets/thesis-wayfinding.jpg", "SPATIAL"],
-  ["/portfolio-assets/vitrolume/glass-hero.png", "GLASS / LIGHT"],
-  ["/portfolio-assets/reverie-cover.jpg", "WEBGL"],
-  ["/portfolio-assets/melonpop/melo-dew-brand-overview.png", "RETAIL"],
+  [assetPath("portfolio-assets/dad/material-ember.jpg"), "IDENTITY"],
+  [assetPath("portfolio-assets/packaging-mockup.jpg"), "PACKAGING"],
+  [assetPath("portfolio-assets/thesis-wayfinding.jpg"), "SPATIAL"],
+  [assetPath("portfolio-assets/vitrolume/glass-hero.png"), "GLASS / LIGHT"],
+  [assetPath("portfolio-assets/reverie-cover.jpg"), "WEBGL"],
+  [assetPath("portfolio-assets/melonpop/melo-dew-brand-overview.png"), "RETAIL"],
 ] as const;
 
 const experience = [
@@ -132,7 +133,7 @@ export function SynthesisAboutPage() {
       <section className={styles.profile} id="profile" aria-labelledby="profile-title">
         <figure className={styles.portrait}>
           <Image
-            src="/portfolio-assets/about-portrait.webp"
+            src={assetPath("portfolio-assets/about-portrait.webp")}
             alt="温一帆个人肖像"
             fill
             sizes="(max-width: 800px) 100vw, 44vw"

@@ -10,6 +10,7 @@ import { LiquidLink } from "./liquid-link";
 import { announceSynthesisRouteReady } from "./route-events";
 import { createThreeUiDockController } from "./threeui-motion";
 import { TransitionLink } from "./transition-link";
+import { assetPath } from "@/lib/assets";
 
 gsap.registerPlugin(useGSAP);
 
@@ -247,7 +248,7 @@ export function SynthesisHome() {
 
       <section className="synthesis-about" id="about" aria-labelledby="synthesis-about-title">
         <figure>
-          <Image src="/portfolio-assets/about-portrait.webp" alt="Portrait of designer Wen Yifan" fill sizes="(max-width: 800px) 100vw, 44vw" />
+          <Image src={assetPath("portfolio-assets/about-portrait.webp")} alt="Portrait of designer Wen Yifan" fill sizes="(max-width: 800px) 100vw, 44vw" />
           <figcaption>WEN YIFAN / HANGZHOU</figcaption>
         </figure>
         <div className="synthesis-about__copy">
