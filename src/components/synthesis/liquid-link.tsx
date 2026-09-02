@@ -185,7 +185,7 @@ export function LiquidLink({
     <TransitionLink
       ref={host}
       href={href}
-      className={`liquid-link liquid-link--${variant}${className ? ` ${className}` : ""}`}
+      className={`liquid-link liquid-link--${variant}${ready ? " is-shader-ready" : ""}${className ? ` ${className}` : ""}`}
       data-state={ready ? "ready" : "loading"}
       aria-label={ariaLabel}
       onPointerEnter={handlePointerEnter}
