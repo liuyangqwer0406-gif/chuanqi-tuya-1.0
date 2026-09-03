@@ -3,8 +3,9 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import "./loader-lab.css";
+import { SpiralDisc } from "./spiral-disc";
 
-type LoaderConcept = "hold" | "lens" | "slider" | "decryptor";
+type LoaderConcept = "spiral" | "hold" | "lens" | "slider" | "decryptor";
 
 interface ConceptDef {
   id: LoaderConcept;
@@ -14,14 +15,14 @@ interface ConceptDef {
 }
 
 const CONCEPTS: ConceptDef[] = [
-  { id: "hold", label: "方案 A · 触控蓄能破壁", tag: "Press & Hold Singularity", tip: "在屏幕任意位置长按鼠标或屏幕充能，达到 100% 触发超新星撕裂破壁！" },
-  { id: "lens", label: "方案 B · 空间探照透镜", tag: "Spatial Caustic Lens", tip: "晃动鼠标感受 3D 景深倾斜与透镜扫描，点击任意处释放冲击波进入！" },
-  { id: "slider", label: "方案 C · 物理磁吸滑块", tag: "Kinetic Drag Gateway", tip: "按住底部的信号橙滑块向右拖动，松手体验真实物理惯性回弹或冲刺解锁！" },
-  { id: "decryptor", label: "方案 D · 矩阵声波解密", tag: "Interactive Matrix", tip: "鼠标悬停标题即可实时扰动字符乱码，点击任意处直接贯穿入场。" },
+  { id: "spiral", label: "方案 A · 同心引力字轮 (SpiralScene)", tag: "WebGL2 Instanced Disc", tip: "桌面‘网站设计md’原版核心复刻：30 圈同心字轮旋转，悬停字符融化为粒子，长按 0.9s 蓄能凝聚，松手引发 1.8s 冲击波破幕！" },
+  { id: "hold", label: "方案 B · 触控蓄能破壁 (Singularity)", tag: "Press & Hold Singularity", tip: "在屏幕任意位置长按鼠标或屏幕充能，达到 100% 触发超新星撕裂破壁！" },
+  { id: "lens", label: "方案 C · 空间探照透镜 (Spatial Lens)", tag: "Spatial Caustic Lens", tip: "晃动鼠标感受 3D 景深倾斜与透镜扫描，点击任意处释放冲击波进入！" },
+  { id: "slider", label: "方案 D · 物理磁吸滑块 (Kinetic Slider)", tag: "Kinetic Drag Gateway", tip: "按住底部的信号橙滑块向右拖动，松手体验真实物理惯性回弹或冲刺解锁！" },
 ];
 
 export function LoaderLab() {
-  const [activeConcept, setActiveConcept] = useState<LoaderConcept>("hold");
+  const [activeConcept, setActiveConcept] = useState<LoaderConcept>("spiral");
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isHolding, setIsHolding] = useState<boolean>(false);
   const [holdProgress, setHoldProgress] = useState<number>(0);
@@ -39,6 +40,21 @@ export function LoaderLab() {
   const holdRafRef = useRef<number | null>(null);
   const sliderTrackRef = useRef<HTMLDivElement>(null);
   const isDraggingSlider = useRef<boolean>(false);
+
+  const triggerSpiralReveal = useCallback(() => {
+    if (isPlaying) return;
+    setIsPlaying(true);
+    const stage = stageRef.current;
+    if (!stage) return;
+    gsap.to(stage, {
+      clipPath: "circle(0% at 50% 50%)",
+      duration: 1.0,
+      ease: "expo.inOut",
+      onComplete: () => {
+        setIsPlaying(false);
+      },
+    });
+  }, [isPlaying]);
 
   // Reset stage
   const resetStage = useCallback(() => {
@@ -382,7 +398,14 @@ export function LoaderLab() {
         onPointerLeave={activeConcept === "hold" ? handleHoldEnd : undefined}
         onMouseMove={activeConcept === "lens" ? handleLensMouseMove : undefined}
       >
-        {/* ================= Concept A: Hold to Charge ================= */}
+                {/* ================= Concept A: SpiralScene ================= */}
+        {activeConcept === "spiral" && (
+          <div style={{ position: "absolute", inset: 0, zIndex: 2 }}>
+            <SpiralDisc onRelease={triggerSpiralReveal} />
+          </div>
+        )}
+
+        {/* ================= Concept B: Hold to Charge ================= */}
         {activeConcept === "hold" && (
           <>
             <div className="hold__center">
