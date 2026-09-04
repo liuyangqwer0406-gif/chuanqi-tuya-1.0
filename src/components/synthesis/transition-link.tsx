@@ -51,7 +51,10 @@ export function TransitionLink({ href, onClick, ...props }: TransitionLinkProps)
       if (destination.hash) {
         const target = document.getElementById(decodeURIComponent(destination.hash.slice(1)));
         window.history.pushState(window.history.state, "", `${destination.pathname}${destination.search}${destination.hash}`);
-        target?.scrollIntoView();
+        if (target) {
+          const top = target.getBoundingClientRect().top + window.scrollY - 88;
+          window.scrollTo({ top, behavior: "auto" });
+        }
       } else {
         window.history.replaceState(window.history.state, "", `${destination.pathname}${destination.search}`);
         window.scrollTo({ top: 0, behavior: "auto" });

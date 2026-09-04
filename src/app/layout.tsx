@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SmoothMotionProvider } from "@/components/motion/smooth-motion-provider";
 
 export const metadata: Metadata = {
   title: "Wen Yifan - Visual Design Portfolio",
@@ -13,7 +14,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
-      <body>{children}</body>
+      <body>
+        <SmoothMotionProvider>{children}</SmoothMotionProvider>
+      </body>
     </html>
   );
 }

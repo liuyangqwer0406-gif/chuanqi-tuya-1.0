@@ -15,7 +15,6 @@ import { VgpuSignalField } from "@/components/vgpu/vgpu-signal-field";
 import { SylvaLivingWorldScene } from "./sylva-living-world-scene";
 import { TransitionLink } from "./transition-link";
 import { InstrumentCursor } from "./instrument-cursor";
-import { SmoothWheelScroll } from "./smooth-wheel-scroll";
 
 gsap.registerPlugin(useGSAP);
 
@@ -521,7 +520,6 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
   return (
     <div className={`synthesis-site${loaded ? " is-loaded" : " is-loading"}`} aria-busy={!loaded || routePhase === "loading"}>
       <InstrumentCursor />
-      <SmoothWheelScroll />
       <a className="synthesis-skip" href="#content">Skip to content</a>
       <div ref={loaderNode} className="synthesis-loader" aria-hidden="true">
         <span className="synthesis-loader__line synthesis-loader__line--vertical" />
