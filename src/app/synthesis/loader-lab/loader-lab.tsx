@@ -3,556 +3,649 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import "./loader-lab.css";
-import { SpiralDisc } from "./spiral-disc";
 
-type LoaderConcept = "spiral" | "hold" | "lens" | "slider" | "decryptor";
+type LoaderSchemeId = "aperture" | "hold" | "quad" | "classic";
 
-interface ConceptDef {
-  id: LoaderConcept;
-  label: string;
-  tag: string;
+interface SchemeDef {
+  id: LoaderSchemeId;
+  index: string;
+  name: string;
+  badge: string;
   tip: string;
 }
 
-const CONCEPTS: ConceptDef[] = [
-  { id: "spiral", label: "方案 A · 同心引力字轮 (SpiralScene)", tag: "WebGL2 Instanced Disc", tip: "桌面‘网站设计md’原版核心复刻：30 圈同心字轮旋转，悬停字符融化为粒子，长按 0.9s 蓄能凝聚，松手引发 1.8s 冲击波破幕！" },
-  { id: "hold", label: "方案 B · 触控蓄能破壁 (Singularity)", tag: "Press & Hold Singularity", tip: "在屏幕任意位置长按鼠标或屏幕充能，达到 100% 触发超新星撕裂破壁！" },
-  { id: "lens", label: "方案 C · 空间探照透镜 (Spatial Lens)", tag: "Spatial Caustic Lens", tip: "晃动鼠标感受 3D 景深倾斜与透镜扫描，点击任意处释放冲击波进入！" },
-  { id: "slider", label: "方案 D · 物理磁吸滑块 (Kinetic Slider)", tag: "Kinetic Drag Gateway", tip: "按住底部的信号橙滑块向右拖动，松手体验真实物理惯性回弹或冲刺解锁！" },
+const SCHEMES: SchemeDef[] = [
+  {
+    id: "aperture",
+    index: "01",
+    name: "空间光圈曝光破幕",
+    badge: "RECOMMENDED",
+    tip: "★ 推荐方案：中心光斑呼吸蓄能，就绪时以摄影机光圈由中心极速向外圆形曝光撕裂，无缝透出三维点云与主视觉！",
+  },
+  {
+    id: "hold",
+    index: "02",
+    name: "触控蓄能超新星",
+    badge: "INTERACTIVE",
+    tip: "★ 极客把玩：长按屏幕任意位置蓄能，高频压缩能量后从点击坐标释放超新星冲击波，掌控感极强！",
+  },
+  {
+    id: "quad",
+    index: "03",
+    name: "瑞士网格四分屏拆解",
+    badge: "ARCHITECTURAL",
+    tip: "★ 理性构成：十字参考线锁定中心，屏幕严谨分为四个象限向四对角对偶滑移淡出，纯正瑞士几何学美感！",
+  },
+  {
+    id: "classic",
+    index: "04",
+    name: "原版上下卷帘拉起",
+    badge: "BASELINE",
+    tip: "★ 原版对照：当前线上版本的机械式向上拉帘子，方便您直观比对升级前后的空间感与仪式感差异。",
+  },
+];
+
+const PHASES = [
+  { id: "01", primary: "INITIALIZING", secondary: "SCENE", cn: "初始化场景", detail: "CREATING 3D RENDER CONTEXT" },
+  { id: "02", primary: "RESOLVING", secondary: "MATERIALS", cn: "解析材质与图像", detail: "RESOLVING PARTICLES / SHADERS" },
+  { id: "03", primary: "BINDING", secondary: "INPUT", cn: "绑定交互输入", detail: "BINDING POINTER / TACTILE INPUT" },
+  { id: "04", primary: "VIEW", secondary: "READY", cn: "视图准备完成", detail: "3D LIVING SCENE / PORTFOLIO INDEX" },
 ];
 
 export function LoaderLab() {
-  const [activeConcept, setActiveConcept] = useState<LoaderConcept>("spiral");
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [isHolding, setIsHolding] = useState<boolean>(false);
+  const [activeScheme, setActiveScheme] = useState<LoaderSchemeId>("aperture");
+  const [phaseIndex, setPhaseIndex] = useState<number>(0);
+  const [isRevealed, setIsRevealed] = useState<boolean>(false);
+  const [speed, setSpeed] = useState<number>(1.0);
   const [holdProgress, setHoldProgress] = useState<number>(0);
-  const [pointerPos, setPointerPos] = useState<{ x: number; y: number }>(() => {
-    if (typeof window !== "undefined") {
-      return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    }
-    return { x: 0, y: 0 };
-  });
-  const [sliderVal, setSliderVal] = useState<number>(0);
-  const [decryptedText, setDecryptedText] = useState<string>("WEN YIFAN");
+  const [pointerCoord, setPointerCoord] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isHolding, setIsHolding] = useState<boolean>(false);
+  const [waitingForHold, setWaitingForHold] = useState<boolean>(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
+  const bgHeroRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const holdRafRef = useRef<number | null>(null);
-  const sliderTrackRef = useRef<HTMLDivElement>(null);
-  const isDraggingSlider = useRef<boolean>(false);
+  const autoDetonateTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const triggerSpiralReveal = useCallback(() => {
-    if (isPlaying) return;
-    setIsPlaying(true);
+  const currentPhase = PHASES[phaseIndex];
+  const activeDef = SCHEMES.find((s) => s.id === activeScheme) || SCHEMES[0];
+
+  // Execute full reveal choreography based on selected scheme
+  const executeReveal = useCallback((origin?: { x: number; y: number }) => {
     const stage = stageRef.current;
     if (!stage) return;
-    gsap.to(stage, {
-      clipPath: "circle(0% at 50% 50%)",
-      duration: 1.0,
-      ease: "expo.inOut",
+
+    if (autoDetonateTimerRef.current) {
+      clearTimeout(autoDetonateTimerRef.current);
+      autoDetonateTimerRef.current = null;
+    }
+    setWaitingForHold(false);
+
+    const durMult = speed === 0.5 ? 2.0 : 1.0;
+    const tl = gsap.timeline({
       onComplete: () => {
-        setIsPlaying(false);
+        setIsRevealed(true);
+        if (stage) gsap.set(stage, { display: "none", autoAlpha: 0 });
       },
     });
-  }, [isPlaying]);
 
-  // Reset stage
-  const resetStage = useCallback(() => {
-    if (timelineRef.current) {
-      timelineRef.current.kill();
-      timelineRef.current = null;
+    timelineRef.current = tl;
+
+    // Common: fade out stage text & meta
+    const title = stage.querySelector(".loader-stage__center");
+    const meta = stage.querySelector(".loader-stage__meta");
+    const footer = stage.querySelector(".loader-stage__footer");
+    const axisV = stage.querySelector(".loader-stage__axis-v");
+    const axisH = stage.querySelector(".loader-stage__axis-h");
+
+    tl.to([title, meta, footer].filter(Boolean), {
+      autoAlpha: 0,
+      y: -18,
+      duration: 0.26 * durMult,
+      stagger: 0.035,
+      ease: "power2.in",
+    }, 0);
+
+    // Camera dolly settle on background hero
+    if (bgHeroRef.current) {
+      gsap.fromTo(
+        bgHeroRef.current,
+        { scale: 0.982, autoAlpha: 0.8 },
+        { scale: 1, autoAlpha: 1, duration: 0.9 * durMult, ease: "power2.out", delay: 0.15 * durMult }
+      );
     }
+
+    if (activeScheme === "aperture") {
+      // -------------------------------------------------------------
+      // Scheme 01: Center Aperture Optical Reveal
+      // -------------------------------------------------------------
+      const singularity = stage.querySelector<HTMLElement>(".loader-stage__singularity");
+      const ring = stage.querySelector<HTMLElement>(".loader-stage__aperture-ring");
+
+      if (singularity) {
+        tl.to(singularity, {
+          scale: 4.2,
+          opacity: 1,
+          duration: 0.22 * durMult,
+          ease: "power3.in",
+        }, 0)
+        .to(singularity, {
+          autoAlpha: 0,
+          duration: 0.15 * durMult,
+        }, 0.2 * durMult);
+      }
+
+      tl.call(() => {
+        stage.classList.add("is-aperture-masked");
+        stage.style.setProperty("--hole-x", "50%");
+        stage.style.setProperty("--hole-y", "50%");
+        stage.style.setProperty("--hole-size", "0%");
+      }, [], 0.12 * durMult);
+
+      // Animate mask hole size 0% -> 140%
+      const maskObj = { size: 0 };
+      tl.to(maskObj, {
+        size: 140,
+        duration: 0.85 * durMult,
+        ease: "expo.inOut",
+        onUpdate: () => {
+          stage.style.setProperty("--hole-size", `${maskObj.size}%`);
+        },
+      }, 0.14 * durMult);
+
+      // Animate shockwave laser ring
+      if (ring) {
+        gsap.set(ring, { left: "50%", top: "50%" });
+        tl.fromTo(
+          ring,
+          { scale: 0, autoAlpha: 1, borderWidth: "5px" },
+          { scale: 38, autoAlpha: 0, borderWidth: "1px", duration: 0.85 * durMult, ease: "expo.inOut" },
+          0.14 * durMult
+        );
+      }
+    } else if (activeScheme === "hold") {
+      // -------------------------------------------------------------
+      // Scheme 02: Tactile Hold Detonation from Click Origin
+      // -------------------------------------------------------------
+      const ox = origin ? origin.x : window.innerWidth / 2;
+      const oy = origin ? origin.y : window.innerHeight / 2;
+      const ring = stage.querySelector<HTMLElement>(".loader-stage__aperture-ring");
+
+      tl.call(() => {
+        stage.classList.add("is-aperture-masked");
+        stage.style.setProperty("--hole-x", `${ox}px`);
+        stage.style.setProperty("--hole-y", `${oy}px`);
+        stage.style.setProperty("--hole-size", "0%");
+      }, [], 0.05 * durMult);
+
+      const maskObj = { size: 0 };
+      tl.to(maskObj, {
+        size: 155,
+        duration: 0.8 * durMult,
+        ease: "expo.inOut",
+        onUpdate: () => {
+          stage.style.setProperty("--hole-size", `${maskObj.size}%`);
+        },
+      }, 0.06 * durMult);
+
+      if (ring) {
+        gsap.set(ring, { left: `${ox}px`, top: `${oy}px` });
+        tl.fromTo(
+          ring,
+          { scale: 0, autoAlpha: 1, borderWidth: "6px" },
+          { scale: 42, autoAlpha: 0, borderWidth: "1px", duration: 0.82 * durMult, ease: "expo.inOut" },
+          0.06 * durMult
+        );
+      }
+    } else if (activeScheme === "quad") {
+      // -------------------------------------------------------------
+      // Scheme 03: Architectural Quad Split
+      // -------------------------------------------------------------
+      const quadWrap = stage.querySelector<HTMLElement>(".loader-stage__quad-wrap");
+      const cells = stage.querySelectorAll<HTMLElement>(".loader-stage__quad-cell");
+
+      if (quadWrap) quadWrap.classList.add("is-active");
+      stage.style.background = "transparent";
+
+      if (cells.length === 4) {
+        // [0: Top-Left, 1: Top-Right, 2: Bottom-Left, 3: Bottom-Right]
+        tl.to(cells[0], { xPercent: -105, yPercent: -105, duration: 0.78 * durMult, ease: "expo.inOut" }, 0.12 * durMult)
+          .to(cells[1], { xPercent: 105, yPercent: -105, duration: 0.78 * durMult, ease: "expo.inOut" }, 0.12 * durMult)
+          .to(cells[2], { xPercent: -105, yPercent: 105, duration: 0.78 * durMult, ease: "expo.inOut" }, 0.12 * durMult)
+          .to(cells[3], { xPercent: 105, yPercent: 105, duration: 0.78 * durMult, ease: "expo.inOut" }, 0.12 * durMult);
+      }
+
+      if (axisV) tl.to(axisV, { scaleY: 0, autoAlpha: 0, duration: 0.35 * durMult, ease: "power2.inOut" }, 0.1 * durMult);
+      if (axisH) tl.to(axisH, { scaleX: 0, autoAlpha: 0, duration: 0.35 * durMult, ease: "power2.inOut" }, 0.1 * durMult);
+    } else {
+      // -------------------------------------------------------------
+      // Scheme 04: Classic Production Vertical Shutter (Baseline)
+      // -------------------------------------------------------------
+      if (axisV) tl.to(axisV, { scaleY: 0, duration: 0.3 * durMult, ease: "power2.inOut" }, 0.15 * durMult);
+      if (axisH) tl.to(axisH, { scaleX: 0, duration: 0.3 * durMult, ease: "power2.inOut" }, 0.15 * durMult);
+      tl.to(stage, {
+        clipPath: "inset(0 0 100% 0)",
+        duration: 0.68 * durMult,
+        ease: "expo.inOut",
+      }, 0.22 * durMult);
+    }
+  }, [activeScheme, speed]);
+
+  // Master Playback Sequence (Runs 4-phase loading then triggers reveal)
+  const playSequence = useCallback(() => {
+    timelineRef.current?.kill();
+    if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current);
+    if (autoDetonateTimerRef.current) clearTimeout(autoDetonateTimerRef.current);
+
     const stage = stageRef.current;
     if (!stage) return;
 
-    gsap.killTweensOf(stage);
+    setIsRevealed(false);
+    setPhaseIndex(0);
+    setHoldProgress(0);
+    setIsHolding(false);
+    setWaitingForHold(false);
+
+    const durMult = speed === 0.5 ? 2.0 : 1.0;
+
+    // Reset stage appearance & remove modifiers
+    gsap.killTweensOf([stage, ...stage.querySelectorAll("*")]);
+    stage.classList.remove("is-aperture-masked");
+    stage.style.background = "";
+    stage.style.removeProperty("--hole-size");
+    stage.style.removeProperty("--hole-x");
+    stage.style.removeProperty("--hole-y");
+
     gsap.set(stage, {
       display: "flex",
       autoAlpha: 1,
-      clipPath: "circle(150% at 50% 50%)",
-      clearProps: "transform,yPercent,xPercent",
-    });
-    setHoldProgress(0);
-    setSliderVal(0);
-    setIsPlaying(false);
-  }, []);
-
-  // -----------------------------------------------------------------
-  // Concept A: Hold Charging logic
-  // -----------------------------------------------------------------
-  const completeHoldDetonation = useCallback((originX: number, originY: number) => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    setIsPlaying(true);
-
-    const tl = gsap.timeline({
-      onComplete: () => {
-        setIsPlaying(false);
-      },
+      clipPath: "none",
+      x: 0,
+      y: 0,
     });
 
-    // Detonate shockwave from touch point
-    tl.to(stage, {
-      clipPath: `circle(160% at ${originX}px ${originY}px)`,
-      duration: 0.75,
-      ease: "expo.inOut",
-    }, 0);
-  }, []);
+    const quadWrap = stage.querySelector<HTMLElement>(".loader-stage__quad-wrap");
+    const cells = stage.querySelectorAll<HTMLElement>(".loader-stage__quad-cell");
+    if (quadWrap) {
+      if (activeScheme === "quad") quadWrap.classList.add("is-active");
+      else quadWrap.classList.remove("is-active");
+    }
+    if (cells.length === 4) {
+      gsap.set(cells, { xPercent: 0, yPercent: 0, autoAlpha: 1 });
+    }
 
-  // Handle pointer down for hold
-  const handleHoldStart = (e: React.PointerEvent) => {
-    if (activeConcept !== "hold" || isPlaying) return;
-    const rect = stageRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const x = e.clientX;
-    const y = e.clientY;
-    setPointerPos({ x, y });
+    const ring = stage.querySelector<HTMLElement>(".loader-stage__aperture-ring");
+    if (ring) gsap.set(ring, { scale: 0, autoAlpha: 0 });
+
+    const singularity = stage.querySelector<HTMLElement>(".loader-stage__singularity");
+    if (singularity) gsap.set(singularity, { scale: 1, autoAlpha: 1 });
+
+    const axisV = stage.querySelector<HTMLElement>(".loader-stage__axis-v");
+    const axisH = stage.querySelector<HTMLElement>(".loader-stage__axis-h");
+    if (axisV) gsap.set(axisV, { scaleY: 1, autoAlpha: 1 });
+    if (axisH) gsap.set(axisH, { scaleX: 1, autoAlpha: 1 });
+
+    const title = stage.querySelector(".loader-stage__center");
+    const meta = stage.querySelector(".loader-stage__meta");
+    const footer = stage.querySelector(".loader-stage__footer");
+    gsap.set([title, meta, footer].filter(Boolean), { autoAlpha: 1, y: 0 });
+
+    // Step through 4 phases with authentic timing
+    const tl = gsap.timeline();
+    timelineRef.current = tl;
+
+    tl.to({}, { duration: 0.15 })
+      .call(() => setPhaseIndex(1), [], 0.45 * durMult)
+      .call(() => setPhaseIndex(2), [], 0.9 * durMult)
+      .call(() => setPhaseIndex(3), [], 1.35 * durMult);
+
+    if (activeScheme !== "hold") {
+      tl.call(() => {
+        executeReveal();
+      }, [], 1.8 * durMult);
+    } else {
+      // Scheme 02: Enter waiting for hold state
+      tl.call(() => {
+        setWaitingForHold(true);
+        // Auto-detonate after 3.2s of inactivity so user never gets stranded
+        autoDetonateTimerRef.current = setTimeout(() => {
+          executeReveal({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+        }, 3200 * durMult);
+      }, [], 1.45 * durMult);
+    }
+  }, [activeScheme, speed, executeReveal]);
+
+  // Initial playback on mount or scheme switch
+  useEffect(() => {
+    playSequence();
+    return () => {
+      timelineRef.current?.kill();
+      if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current);
+      if (autoDetonateTimerRef.current) clearTimeout(autoDetonateTimerRef.current);
+    };
+  }, [activeScheme, speed]);
+
+  // Keyboard controls: 1-4 to switch, Space to replay
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        playSequence();
+      } else if (e.key === "1") setActiveScheme("aperture");
+      else if (e.key === "2") setActiveScheme("hold");
+      else if (e.key === "3") setActiveScheme("quad");
+      else if (e.key === "4") setActiveScheme("classic");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [playSequence]);
+
+  // Parallax Tilt on Pointer Move for Aperture Scheme
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (activeScheme === "aperture" && !isRevealed && stageRef.current) {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const dx = (e.clientX - cx) / cx;
+      const dy = (e.clientY - cy) / cy;
+
+      const center = stageRef.current.querySelector<HTMLElement>(".loader-stage__center");
+      if (center) {
+        gsap.to(center, {
+          x: dx * 14,
+          y: dy * 10,
+          rotateY: dx * 4,
+          rotateX: -dy * 4,
+          duration: 0.4,
+          ease: "power2.out",
+          overwrite: "auto",
+        });
+      }
+    }
+  };
+
+  // -----------------------------------------------------------------
+  // Scheme 02: Hold Charging Handlers
+  // -----------------------------------------------------------------
+  const handleHoldPointerDown = (e: React.PointerEvent) => {
+    if (activeScheme !== "hold" || isRevealed) return;
+    setPointerCoord({ x: e.clientX, y: e.clientY });
     setIsHolding(true);
 
-    let curr = 0;
+    if (autoDetonateTimerRef.current) {
+      clearTimeout(autoDetonateTimerRef.current);
+      autoDetonateTimerRef.current = null;
+    }
+
     const startTime = performance.now();
-    const chargeDuration = 1100; // 1.1s to full charge
+    const chargeDuration = 850; // 0.85s to full charge
 
     const step = (now: number) => {
       const elapsed = now - startTime;
-      curr = Math.min(100, Math.round((elapsed / chargeDuration) * 100));
-      setHoldProgress(curr);
+      const percent = Math.min(100, Math.round((elapsed / chargeDuration) * 100));
+      setHoldProgress(percent);
 
-      // Micro-shake stage as energy compresses
-      if (stageRef.current && curr > 25) {
-        const shake = (curr / 100) * 4;
+      // Micro-shake stage with escalating frequency
+      if (stageRef.current && percent > 15) {
+        const shake = (percent / 100) * 3.5;
         gsap.set(stageRef.current, {
           x: (Math.random() - 0.5) * shake,
           y: (Math.random() - 0.5) * shake,
         });
       }
 
-      if (curr >= 100) {
+      if (percent >= 100) {
         setIsHolding(false);
-        completeHoldDetonation(x, y);
+        if (stageRef.current) gsap.set(stageRef.current, { x: 0, y: 0 });
+        executeReveal({ x: e.clientX, y: e.clientY });
       } else {
         holdRafRef.current = requestAnimationFrame(step);
       }
     };
+
     holdRafRef.current = requestAnimationFrame(step);
   };
 
-  const handleHoldEnd = () => {
-    if (activeConcept !== "hold" || isPlaying) return;
-    if (holdRafRef.current) {
-      cancelAnimationFrame(holdRafRef.current);
-      holdRafRef.current = null;
-    }
+  const handleHoldPointerUp = (e: React.PointerEvent) => {
+    if (activeScheme !== "hold" || isRevealed) return;
+    if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current);
     setIsHolding(false);
+    if (stageRef.current) gsap.to(stageRef.current, { x: 0, y: 0, duration: 0.2 });
 
-    // Spring recoil decay if released prematurely
-    if (holdProgress < 100) {
-      if (stageRef.current) gsap.to(stageRef.current, { x: 0, y: 0, duration: 0.2 });
-      const decay = { val: holdProgress };
-      gsap.to(decay, {
-        val: 0,
-        duration: 0.35,
-        ease: "power2.out",
-        onUpdate: () => setHoldProgress(Math.round(decay.val)),
-      });
-    }
-  };
-
-  // -----------------------------------------------------------------
-  // Concept B: Spatial Lens Mouse Move & 3D Tilt
-  // -----------------------------------------------------------------
-  const handleLensMouseMove = (e: React.MouseEvent) => {
-    if (activeConcept !== "lens") return;
-    const card = stageRef.current?.querySelector<HTMLElement>(".lens__card");
-    const spot = stageRef.current?.querySelector<HTMLElement>(".lens__spotlight");
-    if (!card || !spot) return;
-
-    const rect = stageRef.current!.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = (e.clientX - cx) / (rect.width / 2);
-    const dy = (e.clientY - cy) / (rect.height / 2);
-
-    // Smooth volumetric light follow
-    gsap.to(spot, {
-      x: e.clientX,
-      y: e.clientY,
-      duration: 0.25,
-      ease: "power2.out",
-      overwrite: "auto",
-    });
-
-    // 3D card tilt
-    gsap.to(card, {
-      rotateY: dx * 14,
-      rotateX: -dy * 14,
-      duration: 0.4,
-      ease: "power2.out",
-      overwrite: "auto",
-    });
-  };
-
-  const triggerLensReveal = (e: React.MouseEvent) => {
-    if (isPlaying) return;
-    setIsPlaying(true);
-    const stage = stageRef.current;
-    if (!stage) return;
-
-    const x = e.clientX;
-    const y = e.clientY;
-    const spot = stage.querySelector(".lens__spotlight");
-
-    const tl = gsap.timeline({
-      onComplete: () => setIsPlaying(false),
-    });
-
-    if (spot) {
-      tl.to(spot, { scale: 5, autoAlpha: 0, duration: 0.45, ease: "power3.in" }, 0);
-    }
-    tl.to(stage, {
-      clipPath: `circle(150% at ${x}px ${y}px)`,
-      duration: 0.75,
-      ease: "expo.inOut",
-    }, 0.1);
-  };
-
-  // -----------------------------------------------------------------
-  // Concept C: Slider Drag
-  // -----------------------------------------------------------------
-  const handleSliderPointerDown = (e: React.PointerEvent) => {
-    if (activeConcept !== "slider" || isPlaying) return;
-    isDraggingSlider.current = true;
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-  };
-
-  const handleSliderPointerMove = (e: React.PointerEvent) => {
-    if (!isDraggingSlider.current || !sliderTrackRef.current) return;
-    const rect = sliderTrackRef.current.getBoundingClientRect();
-    const clampedX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-    const percent = Math.round((clampedX / rect.width) * 100);
-    setSliderVal(percent);
-
-    // Live curtain peel matching slider
-    if (stageRef.current) {
-      gsap.set(stageRef.current, {
-        clipPath: `inset(0 ${percent}% 0 0)`,
-      });
-    }
-  };
-
-  const handleSliderPointerUp = () => {
-    if (!isDraggingSlider.current) return;
-    isDraggingSlider.current = false;
-
-    if (sliderVal >= 60) {
-      // Over threshold: Complete unlock with inertia
-      setIsPlaying(true);
-      const tl = gsap.timeline({
-        onComplete: () => setIsPlaying(false),
-      });
-      tl.to({ val: sliderVal }, {
-        val: 100,
-        duration: 0.35,
-        ease: "power4.out",
-        onUpdate: function () {
-          const v = Math.round(this.targets()[0].val);
-          setSliderVal(v);
-          if (stageRef.current) {
-            gsap.set(stageRef.current, { clipPath: `inset(0 ${v}% 0 0)` });
-          }
-        },
-      });
+    if (holdProgress >= 30) {
+      executeReveal({ x: e.clientX, y: e.clientY });
     } else {
-      // Under threshold: Spring recoil back to 0
-      const bounce = { val: sliderVal };
-      gsap.to(bounce, {
-        val: 0,
-        duration: 0.45,
-        ease: "elastic.out(1, 0.5)",
-        onUpdate: () => {
-          const v = Math.round(bounce.val);
-          setSliderVal(v);
-          if (stageRef.current) {
-            gsap.set(stageRef.current, { clipPath: `inset(0 ${v}% 0 0)` });
-          }
-        },
-      });
+      setHoldProgress(0);
     }
   };
-
-  // -----------------------------------------------------------------
-  // Concept D: Interactive Decryptor
-  // -----------------------------------------------------------------
-  const handleDecryptorHover = () => {
-    const target = "WEN YIFAN";
-    const glyphs = "!@#$%^&*()_+~|}{[]:;?><01";
-    let iteration = 0;
-    const interval = setInterval(() => {
-      setDecryptedText(() =>
-        target
-          .split("")
-          .map((letter, index) => {
-            if (index < iteration) return target[index];
-            return glyphs[Math.floor(Math.random() * glyphs.length)];
-          })
-          .join("")
-      );
-      if (iteration >= target.length) clearInterval(interval);
-      iteration += 1 / 2;
-    }, 30);
-  };
-
-  const triggerDecryptorReveal = () => {
-    if (isPlaying) return;
-    setIsPlaying(true);
-    const stage = stageRef.current;
-    if (!stage) return;
-    const tl = gsap.timeline({
-      onComplete: () => setIsPlaying(false),
-    });
-    tl.to(stage, {
-      clipPath: "inset(0 100% 0 0)",
-      duration: 0.72,
-      ease: "expo.inOut",
-    });
-  };
-
-  // When concept changes, reset stage and initiate view
-  useEffect(() => {
-    resetStage();
-    const stage = stageRef.current;
-    if (!stage) return;
-
-    if (activeConcept === "hold") {
-      gsap.set(stage, { clipPath: "circle(150% at 50% 50%)" });
-    } else if (activeConcept === "slider") {
-      gsap.set(stage, { clipPath: "inset(0 0% 0 0)" });
-    } else if (activeConcept === "lens") {
-      gsap.set(stage, { clipPath: "circle(150% at 50% 50%)" });
-    } else if (activeConcept === "decryptor") {
-      gsap.set(stage, { clipPath: "inset(0 0% 0 0)" });
-    }
-  }, [activeConcept, resetStage]);
-
-  // Spacebar shortcut to reset
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space" && e.target === document.body) {
-        e.preventDefault();
-        resetStage();
-      }
-      if (["1", "2", "3", "4"].includes(e.key)) {
-        const idx = parseInt(e.key, 10) - 1;
-        if (CONCEPTS[idx]) {
-          setActiveConcept(CONCEPTS[idx].id);
-        }
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [resetStage]);
-
-  const currentConceptDef = CONCEPTS.find((c) => c.id === activeConcept) || CONCEPTS[0];
 
   return (
-    <main className="loader-lab">
-      {/* 1. Underlying Mock Hero */}
-      <div className="loader-lab__hero-mock">
-        <header className="hero-mock__nav">
-          <div>
-            <b>WEN YIFAN</b> / VISUAL DESIGN 2026
+    <main
+      className="loader-studio"
+      onPointerMove={handlePointerMove}
+      onPointerDown={handleHoldPointerDown}
+      onPointerUp={handleHoldPointerUp}
+    >
+      {/* 1. Real Background Portfolio View (Revealed when loader clears) */}
+      <section className="loader-studio__canvas-bg" aria-label="Portfolio Home Scene">
+        <div className="studio-bg__grid" aria-hidden="true" />
+        <div className="studio-bg__ambient-glow" aria-hidden="true" />
+
+        <header className="studio-bg__header">
+          <div className="studio-bg__logo">
+            <span>026 //</span>
+            <b>WEN YIFAN · 温一帆</b>
           </div>
-          <div>BEIJING &bull; SHANGHAI</div>
-          <div>INTERACTIVE ARRIVAL: SUCCESS</div>
+          <nav className="studio-bg__nav">
+            <span>WORK</span>
+            <span>ABOUT</span>
+            <span>ARCHIVE</span>
+            <div className="studio-bg__status-badge">
+              <i />
+              <span>COMMISSIONS OPEN · 2026</span>
+            </div>
+          </nav>
         </header>
 
-        <div className="hero-mock__body">
-          <div className="hero-mock__tag">GENERATIVE 3D &bull; PHYSICAL SHADERS</div>
-          <h1 className="hero-mock__title">
-            SYNTHESIS OF VISUAL DENSITY &amp; COMPUTED MOTION
-          </h1>
-          <p className="hero-mock__desc">
-            温一帆的视觉设计作品集。探索品牌几何、流体着色器与三维活体生态的数字边界。
-          </p>
-          <div>
-            <a href="#projects" className="hero-mock__cta">
-              <span>EXPLORE ARCHIVE</span>
-              <span>&nearr;</span>
-            </a>
+        <div ref={bgHeroRef} className="studio-bg__hero">
+          <div className="studio-bg__hero-left">
+            <div className="studio-bg__kicker">
+              <span className="studio-bg__kicker-pip" />
+              <span>VISUAL DESIGN PORTFOLIO / 视觉设计作品集</span>
+            </div>
+            <h1 className="studio-bg__title">
+              <span>VISUAL SYSTEMS</span>
+              <b>WITH A PULSE.</b>
+            </h1>
+            <p className="studio-bg__desc">
+              从品牌识别、商业包装到三维影像与互动叙事，建立清楚、可延展的视觉秩序与呼吸节奏。
+            </p>
+          </div>
+
+          <div className="studio-bg__cards">
+            <article className="studio-bg__card">
+              <div className="studio-bg__card-meta">
+                <span className="studio-bg__card-tag">BRAND IDENTITY // 01</span>
+                <span className="studio-bg__card-title">NEURAL ARCHIVE</span>
+                <span className="studio-bg__card-desc">生成式品牌符号与动态秩序体系 · 2026</span>
+              </div>
+              <span className="studio-bg__card-index">01</span>
+            </article>
+
+            <article className="studio-bg__card">
+              <div className="studio-bg__card-meta">
+                <span className="studio-bg__card-tag">SPATIAL IMAGE // 02</span>
+                <span className="studio-bg__card-title">SYLVA LIVING WORLD</span>
+                <span className="studio-bg__card-desc">黑曜三维粒子空间生态与着色器 · 2025</span>
+              </div>
+              <span className="studio-bg__card-index">02</span>
+            </article>
+
+            <article className="studio-bg__card">
+              <div className="studio-bg__card-meta">
+                <span className="studio-bg__card-tag">INTERACTIVE STORY // 03</span>
+                <span className="studio-bg__card-title">CHRONO DYNAMICS</span>
+                <span className="studio-bg__card-desc">时间切片与多维交互叙事装置 · 2026</span>
+              </div>
+              <span className="studio-bg__card-index">03</span>
+            </article>
           </div>
         </div>
 
-        <footer className="hero-mock__footer">
-          <div>GL_VERSION: WEBGL 2.0</div>
-          <div>MOSS BLADES: 124,000 ACTIVE</div>
-          <div>TACTILE FEEDBACK: CALIBRATED</div>
+        <footer className="studio-bg__footer">
+          <span>WEN YIFAN © 2026 ARCHIVE · ALL RIGHTS RESERVED</span>
+          <span>LAT 30.2741° N / LON 120.1551° E · HANGZHOU STUDIO</span>
         </footer>
-      </div>
+      </section>
 
-      {/* 2. Interactive Loader Stage */}
+      {/* 2. Authentic Foreground Preloader Stage */}
       <div
         ref={stageRef}
-        className={`loader-stage stage--${activeConcept}`}
-        onPointerDown={activeConcept === "hold" ? handleHoldStart : undefined}
-        onPointerUp={activeConcept === "hold" ? handleHoldEnd : undefined}
-        onPointerLeave={activeConcept === "hold" ? handleHoldEnd : undefined}
-        onMouseMove={activeConcept === "lens" ? handleLensMouseMove : undefined}
+        className="loader-studio__stage"
+        style={{ cursor: activeScheme === "hold" ? "crosshair" : "default" }}
       >
-                {/* ================= Concept A: SpiralScene ================= */}
-        {activeConcept === "spiral" && (
-          <div style={{ position: "absolute", inset: 0, zIndex: 2 }}>
-            <SpiralDisc onRelease={triggerSpiralReveal} />
+        {/* Shockwave laser ring (Used in Scheme 01 & 02) */}
+        <div className="loader-stage__aperture-ring" aria-hidden="true" />
+
+        {/* Crosshair guidelines */}
+        <div className="loader-stage__axis-v" />
+        <div className="loader-stage__axis-h" />
+
+        {/* Singularity Pulse Orb (Used in Scheme 01 Aperture) */}
+        {activeScheme === "aperture" && (
+          <div className="loader-stage__singularity" aria-hidden="true" />
+        )}
+
+        {/* Architectural Quad Split Grid (Used in Scheme 03) */}
+        <div className="loader-stage__quad-wrap" aria-hidden="true">
+          <div className="loader-stage__quad-cell" />
+          <div className="loader-stage__quad-cell" />
+          <div className="loader-stage__quad-cell" />
+          <div className="loader-stage__quad-cell" />
+        </div>
+
+        {/* Top Header Meta */}
+        <header className="loader-stage__meta">
+          <div className="loader-stage__meta-left">
+            <span className="loader-stage__meta-pip" />
+            <span>WEN YIFAN / 026</span>
           </div>
-        )}
+          <div>VISUAL ARCHIVE / 2026</div>
+        </header>
 
-        {/* ================= Concept B: Hold to Charge ================= */}
-        {activeConcept === "hold" && (
-          <>
-            <div className="hold__center">
-              <div style={{ fontFamily: "var(--lab-mono)", fontSize: "0.8rem", letterSpacing: "0.25em", color: "var(--lab-signal)", marginBottom: "1.2rem" }}>
-                [ TACTILE KINETIC IGNITION ]
+        {/* Center Technical Text Block */}
+        <div className="loader-stage__center">
+          <div className="loader-stage__title-group">
+            <h2 className="loader-stage__title-line">
+              <b>{currentPhase.primary}</b>
+            </h2>
+            <h2 className="loader-stage__title-line">
+              <b>{currentPhase.secondary}</b>
+            </h2>
+            <div className="loader-stage__sub-row">
+              <span className="loader-stage__sub-cn">{currentPhase.cn}</span>
+            </div>
+          </div>
+
+          <div className="loader-stage__phase-axis">
+            <span>{currentPhase.id}</span>
+            <div className="loader-stage__phase-bars">
+              {PHASES.map((p, i) => (
+                <span
+                  key={p.id}
+                  className={`loader-stage__phase-bar ${i <= phaseIndex ? "is-active" : ""}`}
+                />
+              ))}
+            </div>
+            <span>04</span>
+          </div>
+        </div>
+
+        {/* Bottom Rail & Status */}
+        <footer className="loader-stage__footer">
+          <div className="loader-stage__rail">
+            <span
+              className="loader-stage__rail-fill"
+              style={{ transform: `scaleX(${(phaseIndex + 1) / PHASES.length})` }}
+            />
+          </div>
+
+          <div className="loader-stage__status-row">
+            <span>PHASE STATUS</span>
+            <span className="loader-stage__status-detail">{currentPhase.detail}</span>
+          </div>
+        </footer>
+
+        {/* Hold Overlay with Interactive Reticle (Scheme 02) */}
+        {activeScheme === "hold" && !isRevealed && (
+          <div className="loader-stage__hold-overlay" aria-hidden="true">
+            {waitingForHold && (
+              <div className="loader-stage__hold-hint">
+                <span>PRESS & HOLD ANYWHERE TO DETONATE</span>
+                <span>长按屏幕充能释放超新星冲击波（或静待自动破幕）</span>
               </div>
-              <div className="hold__title">WEN YIFAN</div>
-              <div className="hold__progress-meter">
-                <div className="hold__progress-bar">
-                  <div className="hold__progress-fill" style={{ width: `${holdProgress}%` }} />
-                </div>
-                <span>{holdProgress}%</span>
-              </div>
-            </div>
+            )}
 
-            {/* Dynamic reticle following pointer */}
-            <div
-              className="hold__reticle"
-              style={{
-                left: pointerPos.x,
-                top: pointerPos.y,
-                opacity: isHolding ? 1 : 0.45,
-                transform: `translate(-50%, -50%) scale(${isHolding ? 1 + (holdProgress / 100) * 0.5 : 1})`,
-              }}
-            >
-              <div className="hold__reticle-ring hold__reticle-ring--outer" />
-              <div className="hold__reticle-ring hold__reticle-ring--mid" />
-              <div className="hold__reticle-core" />
-            </div>
-
-            <div className="hold__prompt" style={{ opacity: isHolding ? 0.3 : 1 }}>
-              <span>{isHolding ? "CHARGING SINGULARITY..." : "HOLD ANYWHERE TO DETONATE"}</span>
-              <b>长按屏幕任意处蓄能破壁</b>
-            </div>
-          </>
-        )}
-
-        {/* ================= Concept B: Spatial Caustic Lens ================= */}
-        {activeConcept === "lens" && (
-          <>
-            <div className="lens__grid" />
-            <div className="lens__spotlight" />
-            <div className="lens__card" onClick={triggerLensReveal}>
-              <div className="lens__hud-tag">[ SPATIAL 3D PERSPECTIVE LENS ]</div>
-              <div className="lens__title">WEN YIFAN // 2026</div>
-              <div>
-                <button className="lens__click-cta">
-                  <span>CLICK ANYWHERE TO BREACH</span>
-                  <span>&rarr;</span>
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* ================= Concept C: Kinetic Magnetic Slider ================= */}
-        {activeConcept === "slider" && (
-          <>
-            <header className="slider__header">
-              <div>VOL. 2026 // PHYSICAL LOCK</div>
-              <div>DRAG RATIO: {sliderVal}%</div>
-            </header>
-
-            <div className="slider__center">
-              <div className="slider__title">WEN YIFAN</div>
-              <div className="slider__sub">PORTFOLIO OF VISUAL ARCHIVES</div>
-            </div>
-
-            <div className="slider__track-wrap">
+            {isHolding && (
               <div
-                ref={sliderTrackRef}
-                className="slider__track"
-                onPointerDown={handleSliderPointerDown}
-                onPointerMove={handleSliderPointerMove}
-                onPointerUp={handleSliderPointerUp}
+                className="loader-stage__reticle"
+                style={{ left: pointerCoord.x, top: pointerCoord.y }}
               >
-                <div className="slider__track-fill" style={{ width: `${sliderVal}%` }} />
-                <div
-                  className="slider__thumb"
-                  style={{
-                    left: `calc(${sliderVal}% * 0.88)`,
-                  }}
-                >
-                  &rarr;
-                </div>
-                <div className="slider__track-label">
-                  {sliderVal > 5 ? `DISRUPTING ${sliderVal}%` : "SLIDE TO DECRYPT ARCHIVE &rarr;"}
-                </div>
+                <span className="loader-stage__hold-number">{holdProgress}%</span>
+                <span className="loader-stage__reticle-ring" />
+                <span className="loader-stage__reticle-center" />
               </div>
-            </div>
-          </>
-        )}
-
-        {/* ================= Concept D: Interactive Decryptor ================= */}
-        {activeConcept === "decryptor" && (
-          <>
-            <div className="decryptor__grid">
-              <div className="decryptor__grid-h" style={{ top: "30%" }} />
-              <div className="decryptor__grid-h" style={{ top: "50%" }} />
-              <div className="decryptor__grid-h" style={{ top: "70%" }} />
-              <div className="decryptor__grid-v" style={{ left: "25%" }} />
-              <div className="decryptor__grid-v" style={{ left: "50%" }} />
-              <div className="decryptor__grid-v" style={{ left: "75%" }} />
-            </div>
-
-            <div className="decryptor__center" onClick={triggerDecryptorReveal}>
-              <div className="decryptor__label">[ HOVER OVER TITLE TO SCRAMBLE &bull; CLICK TO UNLOCK ]</div>
-              <div className="decryptor__title" onMouseEnter={handleDecryptorHover}>
-                {decryptedText}
-              </div>
-              <div className="decryptor__stats">
-                <div>GRID: <b>ACTIVE</b></div>
-                <div>SCRAMBLE: <b>READY</b></div>
-                <div>FPS: <b>60.0</b></div>
-              </div>
-            </div>
-          </>
+            )}
+          </div>
         )}
       </div>
 
-      {/* 3. Docked Tweaks Console */}
-      <nav className="lab-dock" aria-label="Interactive Controls">
-        <div className="dock__tabs">
-          {CONCEPTS.map((c, i) => (
+      {/* 3. Bottom Docked Director Console */}
+      <nav className="loader-director-dock" aria-label="Loader Scheme Director">
+        <div className="loader-director__tabs">
+          {SCHEMES.map((scheme) => (
             <button
-              key={c.id}
-              onClick={() => setActiveConcept(c.id)}
-              className={`dock__tab ${activeConcept === c.id ? "is-active" : ""}`}
+              key={scheme.id}
+              type="button"
+              className={`loader-director__tab ${activeScheme === scheme.id ? "is-active" : ""}`}
+              onClick={() => setActiveScheme(scheme.id)}
             >
-              <span>{String.fromCharCode(65 + i)}. {c.label}</span>
+              <span className="loader-director__tab-num">[{scheme.index}] {scheme.badge}</span>
+              <span className="loader-director__tab-title">{scheme.name}</span>
             </button>
           ))}
         </div>
 
-        <div className="dock__controls">
-          <div className="dock__actions">
-            <button onClick={resetStage} className={`dock__btn dock__btn--primary ${isPlaying ? "is-playing" : ""}`}>
-              <span>&orarr; 重置闭幕 (Space)</span>
+        <div className="loader-director__controls">
+          <div className="loader-director__actions">
+            <button
+              type="button"
+              className="loader-director__replay-btn"
+              onClick={playSequence}
+              title="重播全流程 (快捷键 Space)"
+            >
+              <span>⟲ 重播加载全流程</span>
             </button>
-            <span style={{ color: "var(--lab-text)", fontWeight: 500, fontSize: "0.76rem" }}>
-              💡 {currentConceptDef.tip}
-            </span>
+
+            <button
+              type="button"
+              className={`loader-director__speed-btn ${speed === 1.0 ? "is-active" : ""}`}
+              onClick={() => setSpeed(1.0)}
+            >
+              1.0X 正常
+            </button>
+
+            <button
+              type="button"
+              className={`loader-director__speed-btn ${speed === 0.5 ? "is-active" : ""}`}
+              onClick={() => setSpeed(0.5)}
+            >
+              0.5X 慢放观察
+            </button>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span className="dock__badge">HIGH-TACTILE &bull; GSAP KINETIC</span>
-            <span>按键 [1-4] 切换</span>
+          <div className="loader-director__tip">
+            {activeDef.tip}
           </div>
         </div>
       </nav>

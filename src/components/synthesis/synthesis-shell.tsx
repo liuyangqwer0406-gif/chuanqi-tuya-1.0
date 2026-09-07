@@ -47,7 +47,8 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
   const normalizedPath = (pathname || "/").replace(/^\/(legendary-doodle1\.0|chuanqi-tuya-1\.0)/, "");
   const isHome = normalizedPath === "" || normalizedPath === "/" || normalizedPath === "/synthesis" || normalizedPath === "/synthesis/";
   const isAbout = normalizedPath === "/synthesis/about" || normalizedPath === "/synthesis/about/" || normalizedPath === "/about";
-  const [loaded, setLoaded] = useState(false);
+  const isLabRoute = normalizedPath.includes("/loader-lab") || normalizedPath.includes("/format-lab");
+  const [loaded, setLoaded] = useState(isLabRoute);
   const [loaderPhase, setLoaderPhase] = useState(0);
   const [routePhase, setRoutePhase] = useState<RoutePhase>("idle");
   const [bufferVisible, setBufferVisible] = useState(false);
@@ -521,35 +522,37 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
     <div className={`synthesis-site${loaded ? " is-loaded" : " is-loading"}`} aria-busy={!loaded || routePhase === "loading"}>
       <InstrumentCursor />
       <a className="synthesis-skip" href="#content">Skip to content</a>
-      <div ref={loaderNode} className="synthesis-loader" aria-hidden="true">
-        <span className="synthesis-loader__line synthesis-loader__line--vertical" />
-        <span className="synthesis-loader__line synthesis-loader__line--horizontal" />
-        <div className="synthesis-loader__meta">
-          <span><i />WEN YIFAN / 026</span>
-          <span>VISUAL ARCHIVE / 2026</span>
-        </div>
-        <div className="synthesis-loader__field">
-          <div className="synthesis-loader__title" key={loaderStage.id} aria-label={`${loaderStage.primary} ${loaderStage.secondary}`}>
-            <span><b>{loaderStage.primary}</b></span>
-            <span><b>{loaderStage.secondary}</b><em>{loaderStage.cn}</em></span>
+      {!isLabRoute && (
+        <div ref={loaderNode} className="synthesis-loader" aria-hidden="true">
+          <span className="synthesis-loader__line synthesis-loader__line--vertical" />
+          <span className="synthesis-loader__line synthesis-loader__line--horizontal" />
+          <div className="synthesis-loader__meta">
+            <span><i />WEN YIFAN / 026</span>
+            <span>VISUAL ARCHIVE / 2026</span>
           </div>
-          <div className="synthesis-loader__axis">
-            <span>{loaderStage.id}</span>
-            <div aria-hidden="true">
-              {LOADER_PHASES.map((phase, index) => <i key={phase.id} data-complete={index <= visibleLoaderPhase || undefined} />)}
+          <div className="synthesis-loader__field">
+            <div className="synthesis-loader__title" key={loaderStage.id} aria-label={`${loaderStage.primary} ${loaderStage.secondary}`}>
+              <span><b>{loaderStage.primary}</b></span>
+              <span><b>{loaderStage.secondary}</b><em>{loaderStage.cn}</em></span>
             </div>
-            <span>04</span>
+            <div className="synthesis-loader__axis">
+              <span>{loaderStage.id}</span>
+              <div aria-hidden="true">
+                {LOADER_PHASES.map((phase, index) => <i key={phase.id} data-complete={index <= visibleLoaderPhase || undefined} />)}
+              </div>
+              <span>04</span>
+            </div>
+            <div className="synthesis-loader__status">
+              <span>3D SCENE / PORTFOLIO INDEX</span>
+              <span>{loaderStage.status}</span>
+            </div>
           </div>
-          <div className="synthesis-loader__status">
-            <span>3D SCENE / PORTFOLIO INDEX</span>
-            <span>{loaderStage.status}</span>
+          <div className="synthesis-loader__footer">
+            <div className="synthesis-loader__rail"><i /><b /></div>
+            <div><span>LOADING / PHASE {loaderStage.id}</span><span>30.2741° N / 120.1551° E</span></div>
           </div>
         </div>
-        <div className="synthesis-loader__footer">
-          <div className="synthesis-loader__rail"><i /><b /></div>
-          <div><span>LOADING / PHASE {loaderStage.id}</span><span>30.2741° N / 120.1551° E</span></div>
-        </div>
-      </div>
+      )}
       <div
         ref={routeTransitionNode}
         className="route-transition"
@@ -604,14 +607,16 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
       <div className={`synthesis-persistent-scene${isHome ? " is-active" : ""}`} aria-hidden="true">
         {isHome ? <SylvaLivingWorldScene variant="black-ember" active={homeSceneActive} /> : null}
       </div>
-      <header className="synthesis-header">
-        <TransitionLink className="synthesis-brand" href="/synthesis" aria-label="Wen Yifan synthesis portfolio home"><span>WEN</span> YIFAN<sup>026</sup></TransitionLink>
-        <nav ref={primaryNav} aria-label="Primary navigation">
-          <TransitionLink data-proximity-item href={isHome ? "#work" : "/synthesis#work"}><span data-proximity-label>WORK</span></TransitionLink>
-          <TransitionLink data-proximity-item href="/synthesis/about" aria-current={isAbout ? "page" : undefined}><span data-proximity-label>ABOUT</span></TransitionLink>
-          <a data-proximity-item href="mailto:2742733283@qq.com"><span data-proximity-label>CONTACT</span></a>
-        </nav>
-      </header>
+      {!isLabRoute && (
+        <header className="synthesis-header">
+          <TransitionLink className="synthesis-brand" href="/synthesis" aria-label="Wen Yifan synthesis portfolio home"><span>WEN</span> YIFAN<sup>026</sup></TransitionLink>
+          <nav ref={primaryNav} aria-label="Primary navigation">
+            <TransitionLink data-proximity-item href={isHome ? "#work" : "/synthesis#work"}><span data-proximity-label>WORK</span></TransitionLink>
+            <TransitionLink data-proximity-item href="/synthesis/about" aria-current={isAbout ? "page" : undefined}><span data-proximity-label>ABOUT</span></TransitionLink>
+            <a data-proximity-item href="mailto:2742733283@qq.com"><span data-proximity-label>CONTACT</span></a>
+          </nav>
+        </header>
+      )}
       <div className="synthesis-progress" aria-hidden="true"><i /></div>
       {children}
     </div>

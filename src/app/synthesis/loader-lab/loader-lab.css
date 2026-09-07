@@ -1,635 +1,764 @@
 /* ==========================================================================
-   Loader Lab — High-End Interactive GSAP Motion Studio
+   Loader Lab — Authentic Preloader Choreography & Reveal Studio
+   Visual Language: Swiss Technical Editorial, 2px Geometry, Signal Orange (#ff5a1f)
    ========================================================================== */
 
-:root {
-  --lab-bg: #07080a;
-  --lab-surface: rgba(15, 18, 24, 0.9);
-  --lab-border: rgba(255, 255, 255, 0.08);
-  --lab-border-active: rgba(255, 85, 0, 0.5);
-  --lab-signal: #ff5500;
-  --lab-signal-hot: #ff8833;
-  --lab-signal-glow: rgba(255, 85, 0, 0.4);
-  --lab-text: #f4f5f8;
-  --lab-muted: #828b9a;
-  --lab-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --lab-sans: 'Syne', 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
+@import "../../../../tokens.css";
 
-.loader-lab {
+.loader-studio {
   position: relative;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: var(--lab-bg);
-  color: var(--lab-text);
-  font-family: var(--lab-sans);
+  background: var(--color-black, #0e0e10);
+  color: var(--color-paper, #f2efe7);
+  font-family: var(--font-display-synthesis, "Van Montserrat", "Portfolio CN", sans-serif);
   user-select: none;
-  cursor: default;
 }
 
-/* Background Mock Hero */
-.loader-lab__hero-mock {
+/* --- 1. Background Portfolio View (Revealed Surface) --- */
+.loader-studio__canvas-bg {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 3.5rem 4.5rem 8.5rem;
-  background: radial-gradient(circle at 50% 35%, #141a24 0%, #07080a 75%);
+  padding: clamp(24px, 4vw, 56px);
+  background: radial-gradient(circle at 50% 45%, #181513 0%, #0c0c0e 80%);
   z-index: 1;
 }
 
-.hero-mock__nav {
+.studio-bg__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(242, 239, 231, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(242, 239, 231, 0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
+  pointer-events: none;
+}
+
+.studio-bg__ambient-glow {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(90vw, 900px);
+  height: min(60vh, 500px);
+  background: radial-gradient(circle, rgba(255, 90, 31, 0.08) 0%, rgba(255, 90, 31, 0) 70%);
+  pointer-events: none;
+  filter: blur(40px);
+}
+
+.studio-bg__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: 1.5rem;
-  font-family: var(--lab-mono);
-  font-size: 0.8rem;
+  border-bottom: 1px solid rgba(242, 239, 231, 0.12);
+  padding-bottom: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.studio-bg__logo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.studio-bg__logo span {
+  font-size: 10px;
+  color: var(--color-signal, #ff5a1f);
+  font-weight: 600;
+}
+
+.studio-bg__nav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  font-size: 11px;
   letter-spacing: 0.14em;
-  color: var(--lab-muted);
+  color: var(--color-muted-dark, rgba(242, 239, 231, 0.6));
 }
 
-.hero-mock__nav b {
-  color: var(--lab-text);
-  font-weight: 700;
+.studio-bg__nav span {
+  cursor: pointer;
+  transition: color 0.2s ease;
 }
 
-.hero-mock__body {
-  max-width: 960px;
+.studio-bg__nav span:hover {
+  color: var(--color-paper, #f2efe7);
 }
 
-.hero-mock__tag {
+.studio-bg__status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  font-family: var(--lab-mono);
-  font-size: 0.8rem;
-  letter-spacing: 0.16em;
-  color: var(--lab-signal);
-  margin-bottom: 1.5rem;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 90, 31, 0.3);
+  background: rgba(255, 90, 31, 0.08);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--color-signal, #ff5a1f);
 }
 
-.hero-mock__tag::before {
-  content: '';
-  width: 9px;
-  height: 9px;
+.studio-bg__status-badge i {
+  width: 5px;
+  height: 5px;
+  background: var(--color-signal, #ff5a1f);
   border-radius: 50%;
-  background: var(--lab-signal);
-  box-shadow: 0 0 12px var(--lab-signal);
+  box-shadow: 0 0 6px var(--color-signal, #ff5a1f);
 }
 
-.hero-mock__title {
-  font-size: clamp(2.8rem, 6.5vw, 5.8rem);
-  font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: -0.035em;
-  margin-bottom: 1.6rem;
+/* Hero Section Split Layout */
+.studio-bg__hero {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: clamp(32px, 5vw, 72px);
+  align-items: center;
+  margin: auto 0;
+  position: relative;
+  z-index: 2;
 }
 
-.hero-mock__desc {
-  font-size: 1.18rem;
-  line-height: 1.65;
-  color: var(--lab-muted);
-  max-width: 640px;
-  margin-bottom: 2.8rem;
+.studio-bg__hero-left {
+  display: flex;
+  flex-direction: column;
 }
 
-.hero-mock__cta {
+.studio-bg__kicker {
   display: inline-flex;
   align-items: center;
-  gap: 1.2rem;
-  padding: 0.95rem 2rem;
-  border-radius: 9999px;
-  background: var(--lab-signal);
+  gap: 8px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--color-signal, #ff5a1f);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.studio-bg__kicker-pip {
+  width: 6px;
+  height: 6px;
+  background: var(--color-signal, #ff5a1f);
+  box-shadow: 0 0 10px var(--color-signal, #ff5a1f);
+}
+
+.studio-bg__title {
+  font-size: clamp(36px, 6vw, 92px);
+  font-weight: 300;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  margin: 0 0 24px 0;
+}
+
+.studio-bg__title span {
+  display: block;
+}
+
+.studio-bg__title b {
+  font-weight: 600;
   color: #fff;
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 0.05em;
-  box-shadow: 0 0 35px var(--lab-signal-glow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.hero-mock__cta:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 45px var(--lab-signal);
+.studio-bg__desc {
+  font-family: var(--font-body-synthesis, "Portfolio CN", sans-serif);
+  font-size: clamp(13px, 1.1vw, 15px);
+  color: var(--color-muted-dark, rgba(242, 239, 231, 0.65));
+  max-width: 540px;
+  line-height: 1.7;
+  margin: 0;
 }
 
-.hero-mock__footer {
+/* Right Side: Featured Archive Cards */
+.studio-bg__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.studio-bg__card {
   display: flex;
   justify-content: space-between;
-  font-family: var(--lab-mono);
-  font-size: 0.78rem;
-  color: var(--lab-muted);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 1.5rem;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(242, 239, 231, 0.08);
+  border-left: 2px solid transparent;
+  transition: all 0.22s ease;
+  cursor: pointer;
 }
 
-/* ==========================================================================
-   Loader Canvas Overlays
-   ========================================================================== */
-.loader-stage {
+.studio-bg__card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(242, 239, 231, 0.2);
+  border-left-color: var(--color-signal, #ff5a1f);
+  transform: translateX(4px);
+}
+
+.studio-bg__card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.studio-bg__card-tag {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--color-signal, #ff5a1f);
+}
+
+.studio-bg__card-title {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.studio-bg__card-desc {
+  font-size: 11px;
+  color: var(--color-muted-dark, rgba(242, 239, 231, 0.5));
+  font-family: var(--font-body-synthesis, "Portfolio CN", sans-serif);
+}
+
+.studio-bg__card-index {
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  color: rgba(242, 239, 231, 0.25);
+}
+
+.studio-bg__card:hover .studio-bg__card-index {
+  color: var(--color-signal, #ff5a1f);
+}
+
+.studio-bg__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--color-muted-dark, rgba(242, 239, 231, 0.45));
+  border-top: 1px solid rgba(242, 239, 231, 0.08);
+  padding-top: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+/* --- 2. Foreground Preloader Stage --- */
+.loader-studio__stage {
   position: absolute;
   inset: 0;
   z-index: 10;
-  background: #07080a;
+  background: var(--color-black, #0e0e10);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(24px, 4vw, 56px);
+  transform-origin: center center;
+}
+
+/* Masked mode for Aperture (Scheme 01) and Hold (Scheme 02) */
+.loader-studio__stage.is-aperture-masked {
+  -webkit-mask-image: radial-gradient(circle at var(--hole-x, 50%) var(--hole-y, 50%), transparent var(--hole-size, 0%), black calc(var(--hole-size, 0%) + 1px));
+  mask-image: radial-gradient(circle at var(--hole-x, 50%) var(--hole-y, 50%), transparent var(--hole-size, 0%), black calc(var(--hole-size, 0%) + 1px));
+}
+
+/* Expanding Shockwave Laser Ring */
+.loader-stage__aperture-ring {
+  position: absolute;
+  top: var(--hole-y, 50%);
+  left: var(--hole-x, 50%);
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid var(--color-signal, #ff5a1f);
+  box-shadow: 0 0 35px var(--color-signal, #ff5a1f), 0 0 80px rgba(255, 90, 31, 0.5), inset 0 0 30px rgba(255, 90, 31, 0.5);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 30;
+}
+
+/* Crosshair Technical Lines */
+.loader-stage__axis-v {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 42%;
+  width: 1px;
+  background: rgba(242, 239, 231, 0.14);
+  transform-origin: top center;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.loader-stage__axis-h {
+  position: absolute;
+  top: 84px;
+  left: clamp(24px, 4vw, 56px);
+  right: clamp(24px, 4vw, 56px);
+  height: 1px;
+  background: rgba(242, 239, 231, 0.14);
+  transform-origin: left center;
+  pointer-events: none;
+  z-index: 12;
+}
+
+/* Singularity Center Pulse Orb */
+.loader-stage__singularity {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-signal, #ff5a1f);
+  box-shadow: 0 0 28px 8px rgba(255, 90, 31, 0.7), 0 0 70px 20px rgba(255, 90, 31, 0.35);
+  pointer-events: none;
+  z-index: 15;
+  animation: singularity-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes singularity-pulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.45);
+    opacity: 1;
+    box-shadow: 0 0 40px 14px rgba(255, 90, 31, 0.9), 0 0 90px 30px rgba(255, 90, 31, 0.45);
+  }
+}
+
+/* Stage Header Meta */
+.loader-stage__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--color-muted-dark, rgba(242, 239, 231, 0.55));
+  position: relative;
+  z-index: 20;
+}
+
+.loader-stage__meta-left {
   display: flex;
   align-items: center;
-  justify-content: center;
-  pointer-events: auto;
+  gap: 8px;
+  color: var(--color-paper, #f2efe7);
+  font-weight: 500;
+}
+
+.loader-stage__meta-pip {
+  width: 5px;
+  height: 5px;
+  background: var(--color-signal, #ff5a1f);
+  animation: pip-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes pip-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Stage Center Field */
+.loader-stage__center {
+  align-self: center;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: center;
+  position: relative;
+  z-index: 20;
+}
+
+.loader-stage__title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.loader-stage__title-line {
+  font-size: clamp(48px, 9.5vw, 150px);
+  font-weight: 260;
+  letter-spacing: -0.06em;
+  line-height: 0.85;
+  text-transform: uppercase;
+  margin: 0;
   overflow: hidden;
 }
 
-/* -------------------------------------------------------------
-   Interactive Concept 1: Singularity Hold (按住充能破壁)
-   ------------------------------------------------------------- */
-.stage--hold {
-  background: #050608;
-  cursor: crosshair;
+.loader-stage__title-line b {
+  display: block;
 }
 
-.hold__prompt {
-  position: absolute;
-  bottom: 120px;
-  left: 50%;
-  transform: translateX(-50%);
+.loader-stage__sub-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.loader-stage__sub-cn {
+  font-family: var(--font-body-synthesis, "Portfolio CN", sans-serif);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--color-muted-dark, rgba(242, 239, 231, 0.65));
+}
+
+.loader-stage__phase-axis {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  font-family: var(--lab-mono);
-  font-size: 0.85rem;
-  letter-spacing: 0.2em;
-  color: var(--lab-signal);
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-.hold__prompt b {
-  font-size: 0.72rem;
-  color: var(--lab-muted);
+  font-size: 9px;
   letter-spacing: 0.1em;
+  color: var(--color-muted-dark, rgba(242, 239, 231, 0.45));
 }
 
-.hold__reticle {
-  position: absolute;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
+.loader-stage__phase-bars {
   display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hold__reticle-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 85, 0, 0.4);
-  transition: border-color 0.2s ease;
-}
-
-.hold__reticle-ring--outer {
-  width: 140px;
-  height: 140px;
-  border: 1px dashed var(--lab-signal);
-}
-
-.hold__reticle-ring--mid {
-  width: 90px;
-  height: 90px;
-}
-
-.hold__reticle-core {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--lab-signal);
-  box-shadow: 0 0 25px 5px var(--lab-signal);
-}
-
-.hold__center {
-  position: relative;
-  text-align: center;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.hold__title {
-  font-size: clamp(3.5rem, 8.5vw, 7.5rem);
-  font-weight: 900;
-  letter-spacing: 0.05em;
-  line-height: 1;
-  color: #fff;
-  margin-bottom: 1.5rem;
-  text-shadow: 0 0 50px rgba(255, 255, 255, 0.15);
-}
-
-.hold__progress-meter {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  font-family: var(--lab-mono);
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: var(--lab-signal);
-  font-variant-numeric: tabular-nums;
-}
-
-.hold__progress-bar {
-  width: 240px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-  overflow: hidden;
-  position: relative;
-}
-
-.hold__progress-fill {
-  height: 100%;
-  width: 0%;
-  background: var(--lab-signal);
-  box-shadow: 0 0 15px var(--lab-signal);
-  transition: width 0.05s linear;
-}
-
-/* -------------------------------------------------------------
-   Interactive Concept 2: Spatial Lens (空间透镜与 3D 倾斜)
-   ------------------------------------------------------------- */
-.stage--lens {
-  background: #06070a;
-  perspective: 1200px;
-}
-
-.lens__spotlight {
-  position: absolute;
-  width: 480px;
-  height: 480px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 85, 0, 0.18) 0%, rgba(255, 85, 0, 0.05) 45%, transparent 70%);
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  mix-blend-mode: screen;
-  z-index: 2;
-}
-
-.lens__grid {
-  position: absolute;
-  inset: 0;
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
-  pointer-events: none;
-}
-
-.lens__card {
-  position: relative;
-  text-align: center;
-  z-index: 3;
-  transform-style: preserve-3d;
-  padding: 3rem;
-  cursor: pointer;
-}
-
-.lens__hud-tag {
-  font-family: var(--lab-mono);
-  font-size: 0.8rem;
-  letter-spacing: 0.25em;
-  color: var(--lab-signal);
-  margin-bottom: 1.5rem;
-}
-
-.lens__title {
-  font-size: clamp(3.2rem, 8vw, 7rem);
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  color: #fff;
-  margin-bottom: 2rem;
-  text-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
-}
-
-.lens__click-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.8rem 1.6rem;
-  border-radius: 9999px;
-  border: 1px solid var(--lab-signal);
-  background: rgba(255, 85, 0, 0.1);
-  color: #fff;
-  font-family: var(--lab-mono);
-  font-size: 0.85rem;
-  letter-spacing: 0.1em;
-  box-shadow: 0 0 25px var(--lab-signal-glow);
-  transition: all 0.2s ease;
-}
-
-.lens__click-cta:hover {
-  background: var(--lab-signal);
-  transform: scale(1.04);
-}
-
-/* -------------------------------------------------------------
-   Interactive Concept 3: Kinetic Magnetic Slider (物理滑块拉拽)
-   ------------------------------------------------------------- */
-.stage--slider {
-  background: #07080a;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 4rem;
+  gap: 5px;
+  width: 4px;
+  margin: 4px 0;
 }
 
-.slider__header {
-  width: 100%;
+.loader-stage__phase-bar {
+  width: 4px;
+  height: 20px;
+  background: rgba(242, 239, 231, 0.16);
+  transition: all 0.3s ease;
+}
+
+.loader-stage__phase-bar.is-active {
+  background: var(--color-signal, #ff5a1f);
+  box-shadow: 0 0 8px rgba(255, 90, 31, 0.6);
+}
+
+/* Stage Footer Status & Rail */
+.loader-stage__footer {
   display: flex;
-  justify-content: space-between;
-  font-family: var(--lab-mono);
-  font-size: 0.82rem;
-  letter-spacing: 0.18em;
-  color: var(--lab-muted);
-}
-
-.slider__center {
-  text-align: center;
-}
-
-.slider__title {
-  font-size: clamp(3rem, 7.5vw, 6.5rem);
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  margin-bottom: 1rem;
-}
-
-.slider__sub {
-  font-family: var(--lab-mono);
-  font-size: 0.95rem;
-  color: var(--lab-muted);
-  letter-spacing: 0.12em;
-}
-
-.slider__track-wrap {
-  width: min(90vw, 560px);
-  margin: 0 auto;
-}
-
-.slider__track {
+  flex-direction: column;
+  gap: 10px;
   position: relative;
-  width: 100%;
-  height: 64px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  padding: 6px;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
-  cursor: grab;
+  z-index: 20;
 }
 
-.slider__track:active {
-  cursor: grabbing;
+.loader-stage__rail {
+  position: relative;
+  height: 2px;
+  background: rgba(242, 239, 231, 0.14);
+  overflow: hidden;
 }
 
-.slider__track-fill {
+.loader-stage__rail-fill {
   position: absolute;
   top: 0;
-  left: 0;
   bottom: 0;
-  background: linear-gradient(90deg, rgba(255, 85, 0, 0.1), rgba(255, 85, 0, 0.35));
-  border-radius: 9999px;
-  pointer-events: none;
-}
-
-.slider__thumb {
-  position: absolute;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: var(--lab-signal);
-  box-shadow: 0 0 25px var(--lab-signal);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 800;
-  font-size: 1.2rem;
-  z-index: 2;
-  transition: transform 0.1s ease;
-}
-
-.slider__track-label {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--lab-mono);
-  font-size: 0.8rem;
-  letter-spacing: 0.22em;
-  color: rgba(255, 255, 255, 0.4);
-  pointer-events: none;
-}
-
-/* -------------------------------------------------------------
-   Interactive Concept 4: Matrix Decryptor (字符矩阵交互解密)
-   ------------------------------------------------------------- */
-.stage--decryptor {
-  background: #050608;
-}
-
-.decryptor__grid {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.decryptor__grid-h,
-.decryptor__grid-v {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.decryptor__grid-h {
-  width: 100%;
-  height: 1px;
   left: 0;
-  transform-origin: left center;
+  width: 100%;
+  background: var(--color-signal, #ff5a1f);
+  transform-origin: left;
+  transform: scaleX(0.25);
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-.decryptor__grid-v {
-  height: 100%;
-  width: 1px;
-  top: 0;
-  transform-origin: center top;
-}
-
-.decryptor__center {
-  position: relative;
-  text-align: center;
-  z-index: 2;
-  padding: 2rem;
-}
-
-.decryptor__label {
-  font-family: var(--lab-mono);
-  font-size: 0.8rem;
-  letter-spacing: 0.25em;
-  color: var(--lab-signal);
-  margin-bottom: 1.5rem;
-}
-
-.decryptor__title {
-  font-size: clamp(3rem, 8.5vw, 7.5rem);
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  font-family: var(--lab-mono);
-  color: #fff;
-  line-height: 1;
-  text-shadow: 0 0 45px rgba(255, 255, 255, 0.2);
-  margin-bottom: 2rem;
-  cursor: pointer;
-  transition: text-shadow 0.2s ease;
-}
-
-.decryptor__title:hover {
-  text-shadow: 0 0 60px var(--lab-signal);
-  color: var(--lab-signal-hot);
-}
-
-.decryptor__stats {
+.loader-stage__status-row {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--color-muted-dark, rgba(242, 239, 231, 0.5));
+}
+
+.loader-stage__status-detail {
+  color: var(--color-paper, #f2efe7);
+  font-weight: 500;
+}
+
+/* --- 3. Interactive Hold Reticle Overlay (For Concept 02) --- */
+.loader-stage__hold-overlay {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+  z-index: 50;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 3.5rem;
-  font-family: var(--lab-mono);
-  font-size: 0.85rem;
-  color: var(--lab-muted);
 }
 
-.decryptor__counter {
-  font-size: 2.4rem;
-  font-weight: 800;
-  color: var(--lab-signal);
-  font-variant-numeric: tabular-nums;
-  margin-top: 0.5rem;
+.loader-stage__hold-hint {
+  position: absolute;
+  bottom: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--color-signal, #ff5a1f);
+  text-transform: uppercase;
+  pointer-events: none;
 }
 
-/* ==========================================================================
-   Interactive Tweaks Panel (Docked Control Console)
-   ========================================================================== */
-.lab-dock {
+.loader-stage__hold-hint span:last-child {
+  font-size: 9px;
+  color: var(--color-muted-dark, rgba(242, 239, 231, 0.55));
+}
+
+.loader-stage__reticle {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+
+.loader-stage__reticle-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px dashed var(--color-signal, #ff5a1f);
+  width: 130px;
+  height: 130px;
+  animation: spin-reticle 4s linear infinite;
+  box-shadow: 0 0 20px rgba(255, 90, 31, 0.3);
+}
+
+@keyframes spin-reticle {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loader-stage__reticle-center {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-signal, #ff5a1f);
+  box-shadow: 0 0 24px var(--color-signal, #ff5a1f);
+}
+
+.loader-stage__hold-number {
+  position: absolute;
+  top: -28px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-signal, #ff5a1f);
+  letter-spacing: 0.08em;
+}
+
+/* --- 4. Architectural Quad Split Overlay (For Concept 03) --- */
+.loader-stage__quad-wrap {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+}
+
+.loader-stage__quad-wrap.is-active {
+  opacity: 1;
+}
+
+.loader-stage__quad-cell {
+  background: var(--color-black, #0e0e10);
+  border: 1px solid rgba(242, 239, 231, 0.08);
+  position: relative;
+}
+
+/* --- 5. Studio Director Control Console (Docked Bottom) --- */
+.loader-director-dock {
   position: fixed;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;
+  z-index: 99999;
+  width: min(94vw, 840px);
+  background: rgba(13, 13, 16, 0.94);
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  border: 1px solid rgba(242, 239, 231, 0.14);
+  border-radius: 2px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 14px 20px;
-  background: rgba(12, 14, 18, 0.88);
-  backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 85, 0, 0.15);
-  max-width: 95vw;
 }
 
-.dock__tabs {
-  display: flex;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  padding: 4px;
-  border-radius: 12px;
+.loader-director-dock::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 6px;
+  height: 6px;
+  border-top: 2px solid var(--color-signal, #ff5a1f);
+  border-left: 2px solid var(--color-signal, #ff5a1f);
 }
 
-.dock__tab {
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--lab-muted);
-  background: transparent;
-  border: none;
+.loader-director-dock::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 6px;
+  height: 6px;
+  border-bottom: 2px solid var(--color-signal, #ff5a1f);
+  border-right: 2px solid var(--color-signal, #ff5a1f);
+}
+
+.loader-director__tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.loader-director__tab {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(242, 239, 231, 0.09);
+  border-left: 2px solid transparent;
+  border-radius: 1px;
+  padding: 8px 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
+  text-align: left;
+  transition: all 0.18s ease;
+  color: var(--color-paper, #f2efe7);
+  font-family: inherit;
 }
 
-.dock__tab:hover {
-  color: #fff;
+.loader-director__tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(242, 239, 231, 0.22);
 }
 
-.dock__tab.is-active {
-  background: var(--lab-signal);
-  color: #fff;
-  box-shadow: 0 0 16px var(--lab-signal-glow);
+.loader-director__tab.is-active {
+  background: rgba(255, 90, 31, 0.1);
+  border-color: rgba(255, 90, 31, 0.4);
+  border-left: 2px solid var(--color-signal, #ff5a1f);
 }
 
-.dock__controls {
+.loader-director__tab-num {
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  color: var(--color-muted-dark, rgba(242, 239, 231, 0.45));
+  display: block;
+}
+
+.loader-director__tab.is-active .loader-director__tab-num {
+  color: var(--color-signal, #ff5a1f);
+}
+
+.loader-director__tab-title {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: block;
+  margin-top: 2px;
+}
+
+/* Controls row */
+.loader-director__controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  font-size: 0.78rem;
-  font-family: var(--lab-mono);
-  color: var(--lab-muted);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(242, 239, 231, 0.08);
   padding-top: 10px;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
 }
 
-.dock__actions {
+.loader-director__actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-.dock__btn {
+.loader-director__replay-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--color-signal, #ff5a1f);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 0.78rem;
+  border: 1px solid var(--color-signal, #ff5a1f);
+  border-radius: 1px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.1em;
   font-weight: 600;
+  text-transform: uppercase;
+  transition: all 0.18s ease;
+  box-shadow: 0 0 14px rgba(255, 90, 31, 0.4);
+}
+
+.loader-director__replay-btn:hover {
+  background: #ff723b;
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(255, 90, 31, 0.6);
+}
+
+.loader-director__speed-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(242, 239, 231, 0.14);
+  color: var(--color-muted-dark, rgba(242, 239, 231, 0.6));
+  padding: 5px 10px;
+  border-radius: 1px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-family: inherit;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  transition: all 0.16s ease;
 }
 
-.dock__btn:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.25);
+.loader-director__speed-btn.is-active {
+  color: #fff;
+  border-color: var(--color-signal, #ff5a1f);
+  background: rgba(255, 90, 31, 0.12);
 }
 
-.dock__btn--primary {
-  background: var(--lab-signal);
-  border-color: var(--lab-signal);
+.loader-director__tip {
+  font-family: var(--font-body-synthesis, "Portfolio CN", sans-serif);
+  font-size: 9px;
+  color: var(--color-muted-dark, rgba(242, 239, 231, 0.6));
+  letter-spacing: 0.04em;
+  max-width: 440px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.dock__btn--primary:hover {
-  background: #ff6a1a;
-  box-shadow: 0 0 16px var(--lab-signal-glow);
-}
-
-.dock__toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.dock__badge {
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--lab-signal);
-  font-weight: 700;
+@media (max-width: 900px) {
+  .studio-bg__hero {
+    grid-template-columns: 1fr;
+  }
+  .studio-bg__cards {
+    display: none;
+  }
+  .loader-director-dock {
+    width: 96vw;
+    bottom: 12px;
+    padding: 10px;
+  }
+  .loader-director__tabs {
+    grid-template-columns: 1fr 1fr;
+  }
+  .loader-director__tip {
+    display: none;
+  }
 }

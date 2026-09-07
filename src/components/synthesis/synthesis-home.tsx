@@ -15,9 +15,9 @@ import { assetPath } from "@/lib/assets";
 gsap.registerPlugin(useGSAP);
 
 const capabilities = [
-  ["BRAND SYSTEMS", "品牌视觉", "Identity, campaign and packaging built from one clear visual rule."],
-  ["SPATIAL IMAGE", "三维视觉", "Material, light and modelling used to make the central idea visible."],
-  ["INTERACTIVE STORY", "互动叙事", "Web, motion and AI-assisted prototypes shaped around sequence and participation."],
+  ["BRAND SYSTEMS", "品牌与包装", "做一套好用的字标、颜色与排版规则，让它在包装、海报和屏幕上看起来都是一家人。"],
+  ["SPATIAL IMAGE", "三维与空间", "不用假大空的渲染。用扎实的模型结构、微距材质和布光，把产品在空间里的样子交代清楚。"],
+  ["INTERACTIVE STORY", "网页与原型", "自己动手写代码做交互。把静态平面连成有节奏的网页，让人能在屏幕里自然点开翻阅。"],
 ];
 
 export function SynthesisHome() {
@@ -156,7 +156,7 @@ export function SynthesisHome() {
       <section className="synthesis-work" id="work" aria-labelledby="synthesis-work-title">
         <header className="synthesis-section-head">
           <h2 id="synthesis-work-title">SELECTED WORK</h2>
-          <p>Seven cases across identity, production, spatial image and interactive experience.</p>
+          <p>精选 7 个设计项目，涵盖品牌、包装、三维与网页。从一套清楚的规则做起，在真实物料和屏幕上检验它好不好用。</p>
         </header>
 
         <div ref={workStage} className="synthesis-work__stage">
@@ -185,17 +185,19 @@ export function SynthesisHome() {
                 <div className="synthesis-work__copy is-outgoing" key={`${outgoingProject.slug}-copy`} aria-hidden="true">
                   <h3>{outgoingProject.title}</h3>
                   {outgoingProject.titleCn && <h4>{outgoingProject.titleCn}</h4>}
-                  <p>{outgoingProject.intro}</p>
+                  {outgoingProject.introCn && <p className="synthesis-work__intro-cn">{outgoingProject.introCn}</p>}
+                  <p className="synthesis-work__intro-en">{outgoingProject.intro}</p>
                 </div>
               )}
               <div className="synthesis-work__copy is-current" key={`${project.slug}-copy`}>
                 <h3>{project.title}</h3>
                 {project.titleCn && <h4>{project.titleCn}</h4>}
-                <p>{project.intro}</p>
+                {project.introCn && <p className="synthesis-work__intro-cn">{project.introCn}</p>}
+                <p className="synthesis-work__intro-en">{project.intro}</p>
               </div>
             </div>
             <div className="synthesis-work__action">
-              <p><span>OPEN CASE STUDY</span><b>PROJECT {String(active + 1).padStart(2, "0")}</b></p>
+              <p><span>OPEN CASE STUDY</span><b>PROJECT {String(active + 1).padStart(2, "0")} // 完整案例</b></p>
               <LiquidLink
                 href={`/synthesis/projects/${project.slug}`}
                 variant="orb"
@@ -233,7 +235,7 @@ export function SynthesisHome() {
       <section className="synthesis-capabilities" aria-labelledby="synthesis-capabilities-title">
         <header className="synthesis-section-head">
           <h2 id="synthesis-capabilities-title">CONNECTED PRACTICE</h2>
-          <p>Three working fields, one visual method: reduce noise, define a rule, then test it across formats.</p>
+          <p>平时主要做三件事：品牌、三维和网页。方法其实一样：拿掉多余装饰，定好基础规则，再去不同载体上试。</p>
         </header>
         <div className="synthesis-capabilities__grid">
           {capabilities.map(([title, cn, body]) => (
@@ -257,7 +259,7 @@ export function SynthesisHome() {
           <h3>让复杂的想法，清楚到可以继续生长。</h3>
           <div className="synthesis-about__body">
             <p>I work across brand identity, packaging, 3D image and interactive presentation. The goal is not more visual noise, but a system that stays coherent from the first image to the final application.</p>
-            <p>我关注的是视觉如何跨越不同载体保持一致：从标志和排版，到包装、空间图像与网页节奏。</p>
+            <p>比起塞满花哨效果，我更在意一套视觉从第一张草图到最终送印上线，能不能始终讲得通、用得上。</p>
           </div>
           <dl>
             <div><dt>BASE</dt><dd>Hangzhou, China</dd></div>

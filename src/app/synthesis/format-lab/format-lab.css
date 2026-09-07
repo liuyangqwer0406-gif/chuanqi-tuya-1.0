@@ -1,0 +1,883 @@
+/* ==========================================================================
+   026 FORMAT LAB — Architectural Editorial & Travelling Geometry Engine
+   Visual Language: Swiss Technical Architecture, 1440pt Coordinate Scale,
+                    Signal Orange (#ff5a1f), Obsidian Deep Ground (#141416)
+   Inspired by: Obys Agency × DES FORMAT & Wen Yifan 026 Archive
+   ========================================================================== */
+
+@import "../../../../tokens.css";
+
+:root {
+  --s: calc(min(100vw, 1800px) / 1440);
+  --format-bg: #141416;
+  --format-plate: #ffffff;
+  --format-plate-ink: #0e0e10;
+  --format-note: #e0ddbf;
+  --format-note-ink: #1f2421;
+  --format-signal: #ff5a1f;
+  --format-muted: #8e8e96;
+  --format-line: rgba(242, 239, 231, 0.12);
+  --format-blueprint-blue: #2d5a88;
+}
+
+.format-lab-root {
+  position: relative;
+  min-height: 100vh;
+  background: var(--format-bg);
+  color: #f2efe7;
+  font-family: var(--font-display-synthesis, "Van Montserrat", "Portfolio CN", sans-serif);
+  overflow-x: hidden;
+  user-select: none;
+  transition: background-color 0.4s ease;
+}
+
+/* Background Subtle Technical Grid */
+.format-lab-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(242, 239, 231, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(242, 239, 231, 0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* White Opening Curtain */
+.format-curtain {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Filmstrip Stand-in Silhouette */
+.format-filmstrip {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100vw, 1400px);
+  pointer-events: none;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+  opacity: 0;
+}
+
+.format-filmstrip__card {
+  background: rgba(217, 217, 217, 0.9);
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+}
+
+/* --- 1. Global Floating Travelling Morphing Shape --- */
+.format-traveller {
+  position: fixed;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140px;
+  height: 140px;
+  pointer-events: none;
+  z-index: 80;
+  transition: filter 0.3s ease;
+}
+
+.format-traveller__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.format-traveller__glow {
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 90, 31, 0.25) 0%, transparent 70%);
+  filter: blur(16px);
+  pointer-events: none;
+}
+
+/* --- 2. Fixed Top Header & Architectural LOGO --- */
+.format-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px clamp(20px, 3.5vw, 48px);
+  background: rgba(20, 20, 22, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--format-line);
+}
+
+.format-header__brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.format-header__logo {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #ffffff;
+}
+
+.format-header__logo span {
+  color: var(--format-signal);
+  font-weight: 600;
+}
+
+.format-header__tag {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--format-muted);
+  text-transform: uppercase;
+}
+
+.format-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.format-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(242, 239, 231, 0.16);
+  border-radius: 2px;
+  color: #f2efe7;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.format-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(242, 239, 231, 0.3);
+}
+
+.format-btn.is-active {
+  background: var(--format-signal);
+  border-color: var(--format-signal);
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(255, 90, 31, 0.5);
+}
+
+.format-btn--blueprint.is-active {
+  background: var(--format-note);
+  border-color: var(--format-note);
+  color: var(--format-note-ink);
+  box-shadow: 0 0 16px rgba(224, 221, 191, 0.4);
+}
+
+.format-btn--daughter.is-active {
+  background: #ff5277;
+  border-color: #ff5277;
+  color: #ffffff;
+}
+
+/* Giant Architectural FORMAT Logo Banner */
+.format-hero-banner {
+  padding: 100px clamp(20px, 3.5vw, 48px) 40px;
+  position: relative;
+  z-index: 10;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.format-hero-banner__svg {
+  width: 100%;
+  height: auto;
+  max-height: 180px;
+  display: block;
+}
+
+.format-hero-banner__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--format-line);
+  padding-top: 12px;
+  margin-top: 16px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--format-muted);
+}
+
+/* --- 3. Main Exhibition Sections (Chapters) --- */
+.format-main {
+  position: relative;
+  z-index: 10;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px clamp(20px, 3.5vw, 48px) 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 120px;
+}
+
+/* --- Chapter 01: Vertical Format --- */
+.format-sec-vertical {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 48px;
+  align-items: flex-start;
+}
+
+.format-card {
+  position: relative;
+  background: var(--format-plate);
+  color: var(--format-plate-ink);
+  padding: 32px 28px;
+  border-radius: 2px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.is-notes-mode .format-card {
+  background: var(--format-note);
+  color: var(--format-note-ink);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  border: 1px dashed rgba(31, 36, 33, 0.3);
+}
+
+.format-card__photo {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  background: #000;
+  overflow: hidden;
+  border-radius: 1px;
+}
+
+.format-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.format-card:hover .format-card__img {
+  transform: scale(1.04);
+}
+
+/* Daughter doodle image overlay */
+.format-card__kid-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.is-daughter-mode .format-card__kid-img {
+  opacity: 1;
+}
+
+.is-daughter-mode .format-card__img {
+  opacity: 0;
+}
+
+.format-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.format-card__index {
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.format-card__kicker {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--format-muted);
+}
+
+.format-card__title {
+  font-size: 42px;
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* Precision Spec Rows (1.1 Usage, 1.2 Geometry...) */
+.format-card__specs {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-top: 18px;
+}
+
+.is-notes-mode .format-card__specs {
+  border-top-color: rgba(31, 36, 33, 0.2);
+}
+
+.format-spec-row {
+  display: grid;
+  grid-template-columns: 28px 70px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 11px;
+}
+
+.format-spec-num {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.format-spec-label {
+  font-weight: 600;
+  color: var(--format-muted);
+  letter-spacing: 0.06em;
+}
+
+.is-notes-mode .format-spec-label {
+  color: #4a544d;
+}
+
+.format-spec-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-family: var(--font-body-synthesis, "Portfolio CN", sans-serif);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+}
+
+.format-spec-tags span {
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 1px;
+}
+
+.is-notes-mode .format-spec-tags span {
+  background: rgba(31, 36, 33, 0.08);
+}
+
+/* Technical Blueprint Annotation (Visible only in Notes Mode) */
+.format-blueprint-box {
+  display: none;
+  background: rgba(31, 36, 33, 0.06);
+  border: 1px solid rgba(31, 36, 33, 0.2);
+  padding: 12px;
+  border-radius: 1px;
+  font-family: monospace;
+  font-size: 9.5px;
+  line-height: 1.6;
+  color: #2b332d;
+}
+
+.is-notes-mode .format-blueprint-box {
+  display: block;
+}
+
+.format-blueprint-box b {
+  color: var(--format-signal);
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Right Column: Physical Real-time Clock & Interactive Details */
+.format-sec-vertical__right {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.format-clock-panel {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 28px 36px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--format-line);
+  border-radius: 2px;
+}
+
+.format-clock-widget {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+}
+
+.format-clock-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.format-clock-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.format-clock-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.format-clock-time {
+  font-family: monospace;
+  font-size: 20px;
+  color: var(--format-signal);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.format-clock-desc {
+  font-size: 11px;
+  color: var(--format-muted);
+  max-width: 440px;
+  line-height: 1.6;
+  font-family: var(--font-body-synthesis, "Portfolio CN", sans-serif);
+}
+
+/* Theory Quotation Block */
+.format-quote-block {
+  padding: 32px;
+  border-left: 2px solid var(--format-signal);
+  background: rgba(255, 90, 31, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.format-quote-text {
+  font-size: clamp(18px, 2.2vw, 32px);
+  font-weight: 300;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.format-quote-author {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--format-muted);
+}
+
+/* --- Chapter 02: Horizontal Format (Wide Marquee Reel) --- */
+.format-sec-horizontal {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.format-wide-card {
+  background: var(--format-plate);
+  color: var(--format-plate-ink);
+  border-radius: 2px;
+  padding: 36px clamp(24px, 4vw, 56px);
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 48px;
+  align-items: center;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  transition: all 0.35s ease;
+}
+
+.is-notes-mode .format-wide-card {
+  background: var(--format-note);
+  color: var(--format-note-ink);
+  border: 1px dashed rgba(31, 36, 33, 0.3);
+}
+
+.format-wide-card__title {
+  font-size: clamp(48px, 7vw, 110px);
+  font-weight: 300;
+  line-height: 0.88;
+  letter-spacing: -0.06em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.format-wide-card__marquee {
+  width: 100%;
+  overflow: hidden;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 14px 0;
+  margin-top: 24px;
+}
+
+.is-notes-mode .format-wide-card__marquee {
+  border-color: rgba(31, 36, 33, 0.2);
+}
+
+.format-wide-card__track {
+  display: flex;
+  gap: 36px;
+  white-space: nowrap;
+  animation: marquee-roll 16s linear infinite;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+@keyframes marquee-roll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* --- Chapter 03: Dual Symmetrical Dials --- */
+.format-sec-dials {
+  position: relative;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--format-line);
+  background: radial-gradient(circle at 50% 50%, #1a1a1e 0%, #101012 80%);
+}
+
+.format-dial {
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  border: 1px dashed rgba(242, 239, 231, 0.18);
+  pointer-events: none;
+  animation: spin-dial 40s linear infinite;
+}
+
+.format-dial--left {
+  left: -280px;
+}
+
+.format-dial--right {
+  right: -280px;
+  animation-direction: reverse;
+}
+
+@keyframes spin-dial {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.format-dial__core {
+  position: absolute;
+  inset: 120px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 90, 31, 0.3);
+}
+
+.format-sec-dials__center {
+  position: relative;
+  z-index: 20;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 600px;
+}
+
+.format-sec-dials__tag {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--format-signal);
+  text-transform: uppercase;
+}
+
+.format-sec-dials__title {
+  font-size: clamp(32px, 5vw, 68px);
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  line-height: 0.95;
+  margin: 0;
+}
+
+.format-sec-dials__desc {
+  font-size: 12px;
+  color: var(--format-muted);
+  line-height: 1.7;
+  font-family: var(--font-body-synthesis, "Portfolio CN", sans-serif);
+}
+
+/* --- Chapter 04: Click--Clack Rhythm Sandbox --- */
+.format-sec-clickclack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 48px clamp(24px, 4vw, 56px);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--format-line);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.format-sec-clickclack:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 90, 31, 0.5);
+}
+
+.format-clickclack__status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--format-signal);
+}
+
+.format-clickclack__word-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.format-clickclack__block {
+  padding: 32px;
+  border: 1px solid var(--format-line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.18s ease;
+}
+
+.format-clickclack__block.is-active {
+  background: var(--format-signal);
+  color: #ffffff;
+  border-color: var(--format-signal);
+  box-shadow: 0 0 30px rgba(255, 90, 31, 0.4);
+}
+
+.format-clickclack__heading {
+  font-size: clamp(38px, 6vw, 84px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 0.9;
+}
+
+.format-clickclack__desc {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* --- 4. Docked Format Calibration Director Console --- */
+.format-dock {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  width: min(94vw, 880px);
+  background: rgba(18, 18, 20, 0.94);
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  border: 1px solid rgba(242, 239, 231, 0.16);
+  border-radius: 2px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.format-dock::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 6px;
+  height: 6px;
+  border-top: 2px solid var(--format-signal);
+  border-left: 2px solid var(--format-signal);
+}
+
+.format-dock::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 6px;
+  height: 6px;
+  border-bottom: 2px solid var(--format-signal);
+  border-right: 2px solid var(--format-signal);
+}
+
+.format-dock__tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.format-dock__tab {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(242, 239, 231, 0.09);
+  border-left: 2px solid transparent;
+  border-radius: 1px;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+  color: #f2efe7;
+  font-family: inherit;
+}
+
+.format-dock__tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(242, 239, 231, 0.22);
+}
+
+.format-dock__tab.is-active {
+  background: rgba(255, 90, 31, 0.1);
+  border-color: rgba(255, 90, 31, 0.4);
+  border-left: 2px solid var(--format-signal);
+}
+
+.format-dock__tab-num {
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  color: var(--format-muted);
+  display: block;
+}
+
+.format-dock__tab.is-active .format-dock__tab-num {
+  color: var(--format-signal);
+}
+
+.format-dock__tab-title {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: block;
+  margin-top: 2px;
+}
+
+.format-dock__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(242, 239, 231, 0.08);
+  padding-top: 10px;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+}
+
+.format-dock__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.format-dock__replay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--format-signal);
+  color: #fff;
+  border: 1px solid var(--format-signal);
+  border-radius: 1px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: all 0.18s ease;
+  box-shadow: 0 0 14px rgba(255, 90, 31, 0.4);
+}
+
+.format-dock__replay-btn:hover {
+  background: #ff723b;
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(255, 90, 31, 0.6);
+}
+
+.format-dock__morph-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.format-dock__morph-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(242, 239, 231, 0.14);
+  color: var(--format-muted);
+  padding: 5px 8px;
+  border-radius: 1px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  transition: all 0.16s ease;
+}
+
+.format-dock__morph-pill.is-active {
+  color: #fff;
+  border-color: var(--format-signal);
+  background: rgba(255, 90, 31, 0.15);
+}
+
+.format-dock__tip {
+  font-family: var(--font-body-synthesis, "Portfolio CN", sans-serif);
+  font-size: 9px;
+  color: var(--format-muted);
+  letter-spacing: 0.04em;
+  max-width: 400px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 860px) {
+  .format-sec-vertical {
+    grid-template-columns: 1fr;
+  }
+  .format-wide-card {
+    grid-template-columns: 1fr;
+  }
+  .format-dock {
+    width: 96vw;
+    bottom: 12px;
+    padding: 10px;
+  }
+  .format-dock__tabs {
+    grid-template-columns: 1fr 1fr;
+  }
+  .format-dock__tip {
+    display: none;
+  }
+}
