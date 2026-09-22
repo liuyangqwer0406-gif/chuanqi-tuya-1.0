@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ComponentProps, MouseEvent } from "react";
 import { useSmoothScroll } from "@/components/motion/smooth-motion-provider";
+import { getBasePath } from "@/lib/assets";
 import {
   SYNTHESIS_NAVIGATION_START,
   type SynthesisNavigationDetail,
@@ -35,13 +36,25 @@ export function TransitionLink({ href, onClick, ...props }: TransitionLinkProps)
     const destination = new URL(href, window.location.href);
     if (destination.origin !== window.location.origin) return;
 
+    const basePath = getBasePath();
+    const withoutBasePath = (pathname: string) => (
+      basePath && (pathname === basePath || pathname.startsWith(`${basePath}/`))
+        ? pathname.slice(basePath.length) || "/"
+        : pathname
+    );
+    const currentPathname = withoutBasePath(window.location.pathname);
+    const destinationPathname = withoutBasePath(destination.pathname);
+    const browserPathname = basePath && !destination.pathname.startsWith(`${basePath}/`)
+      ? `${basePath}${destination.pathname}`
+      : destination.pathname;
+
     const root = document.documentElement;
     if (root.dataset.routeState && root.dataset.routeState !== "idle") {
       event.preventDefault();
       return;
     }
 
-    const sameDocument = destination.pathname.replace(/\/$/, "") === window.location.pathname.replace(/\/$/, "")
+    const sameDocument = destinationPathname.replace(/\/$/, "") === currentPathname.replace(/\/$/, "")
       && destination.search === window.location.search;
     const pointerInitiated = event.detail > 0;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches || !pointerInitiated;
@@ -53,13 +66,13 @@ export function TransitionLink({ href, onClick, ...props }: TransitionLinkProps)
 
       if (destination.hash) {
         const target = document.getElementById(decodeURIComponent(destination.hash.slice(1)));
-        window.history.pushState(window.history.state, "", `${destination.pathname}${destination.search}${destination.hash}`);
+        window.history.pushState(window.history.state, "", `${browserPathname}${destination.search}${destination.hash}`);
         if (target) {
           const top = target.getBoundingClientRect().top + window.scrollY - Math.max(88, parseFloat(getComputedStyle(target).scrollMarginTop) || 0);
           scrollTo(top, reducedMotion ? { immediate: true, duration: 0 } : { duration: .8 });
         }
       } else {
-        window.history.replaceState(window.history.state, "", `${destination.pathname}${destination.search}`);
+        window.history.replaceState(window.history.state, "", `${browserPathname}${destination.search}`);
         scrollTo(0, reducedMotion ? { immediate: true, duration: 0 } : { duration: .8 });
       }
       return;
@@ -88,8 +101,8 @@ export function TransitionLink({ href, onClick, ...props }: TransitionLinkProps)
       }
     }
 
-    if (window.location.pathname.startsWith("/synthesis/projects/") && destination.pathname === "/synthesis") {
-      const currentSlug = window.location.pathname.split("/").filter(Boolean).at(-1);
+    if (currentPathname.startsWith("/synthesis/projects/") && destinationPathname === "/synthesis") {
+      const currentSlug = currentPathname.split("/").filter(Boolean).at(-1);
       if (currentSlug) window.sessionStorage.setItem("synthesis:return-project", currentSlug);
     }
 
@@ -98,8 +111,8 @@ export function TransitionLink({ href, onClick, ...props }: TransitionLinkProps)
       || event.currentTarget.textContent
       || "NEXT VIEW";
     const detail: SynthesisNavigationDetail = {
-      href: `${destination.pathname}${destination.search}${destination.hash}`,
-      pathname: destination.pathname,
+      href: `${destinationPathname}${destination.search}${destination.hash}`,
+      pathname: destinationPathname,
       label: rawLabel.replace(/^Open case study:\s*/i, "").replace(/\s+/g, " ").trim(),
       reducedMotion,
       origin: pointerInitiated ? {
