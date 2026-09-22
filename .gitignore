@@ -44,4 +44,5 @@ next-env.d.ts
 
 # build / artifacts
 /output
+/public/portfolio-optimized/
 

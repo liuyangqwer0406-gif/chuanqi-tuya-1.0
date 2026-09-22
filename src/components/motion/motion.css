@@ -15,23 +15,23 @@ html.lenis body {
   scroll-behavior: auto !important;
 }
 
-.lenis.lenis-smooth iframe {
+.lenis.lenis-scrolling iframe {
   pointer-events: none;
 }
 
 /* --- 2. Scroll Reveal Animations --- */
-[data-reveal] {
+[data-motion-reveal="pending"] {
   opacity: 0;
   transform: translate3d(0, 24px, 0);
   transition:
     opacity 0.72s cubic-bezier(0.23, 1, 0.32, 1),
     transform 0.72s cubic-bezier(0.23, 1, 0.32, 1);
-  will-change: transform, opacity;
 }
 
-[data-reveal].is-revealed {
+[data-motion-reveal="visible"] {
   opacity: 1;
   transform: translate3d(0, 0, 0);
+  transition: opacity .6s ease, transform .6s cubic-bezier(.23, 1, .32, 1);
 }
 
 body.motion-reveal-disabled [data-reveal] {
@@ -41,7 +41,7 @@ body.motion-reveal-disabled [data-reveal] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-reveal] {
+  [data-reveal], [data-motion-reveal] {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;

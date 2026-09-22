@@ -643,7 +643,7 @@ let needResize = true;
 function resize(){
   const r  = stage.getBoundingClientRect();
   const br = btn.getBoundingClientRect();
-  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  DPR = 2; // Supersample the thin rim even on 1x displays; cap GPU cost at 2x.
   const w = Math.max(2, Math.round(r.width  * DPR));
   const h = Math.max(2, Math.round(r.height * DPR));
   if(w !== W || h !== H){ W = w; H = h; cv.width = W; cv.height = H; }
@@ -693,8 +693,23 @@ function localPt(e){
 
 const calm = matchMedia('(prefers-reduced-motion: reduce)');
 let drawn = null;                  // signature of the last frame actually drawn
+let hostActive = true, frameId = 0;
+function scheduleFrame(){
+  if(hostActive && !document.hidden && !frameId) frameId = requestAnimationFrame(frame);
+}
+window.__setActive = value => {
+  hostActive = !!value;
+  if(!hostActive){ cancelAnimationFrame(frameId); frameId = 0; }
+  else { last = performance.now(); scheduleFrame(); }
+};
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){ cancelAnimationFrame(frameId); frameId = 0; }
+  else { last = performance.now(); scheduleFrame(); }
+});
 
 function frame(now){
+  frameId = 0;
+  if(!hostActive || document.hidden) return;
   const dtRaw = (now - last) / 1000; last = now;
   const dt = Math.min(dtRaw, 1/20);
   if(!calm.matches) clock += dt;
@@ -732,7 +747,7 @@ function frame(now){
   // reduced motion with nothing in flight.
   const sig = (calm.matches && !ripLive && ptrAmt < 0.002)
     ? `${hover}|${press}|${W}|${H}` : null;
-  if(sig !== null && sig === drawn){ requestAnimationFrame(frame); return; }
+  if(sig !== null && sig === drawn){ scheduleFrame(); return; }
   drawn = sig;
 
   for(let i = 0; i < uArr.length; i++) uArr[i] = P[PKEYS[i]];
@@ -838,7 +853,7 @@ function frame(now){
   gl.uniform1f(pComp.u.uThemeOrange, (window.__theme === 'silver' || window.__theme === 'mono') ? 0.0 : 1.0);
   drawTo(null);
 
-  requestAnimationFrame(frame);
+  scheduleFrame();
 }
 
 /* ---------------- interaction ----------------
@@ -893,7 +908,7 @@ btn.addEventListener('keyup', e => {
 });
 
 resize();
-requestAnimationFrame(frame);
+scheduleFrame();
 
 // tiny console hooks for tuning
 window.__set = (o = {}, e = {}, c = {}, r = {}) => {

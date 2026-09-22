@@ -16,7 +16,10 @@ const nextConfig: NextConfig = {
   assetPrefix,
   trailingSlash: true,
   images: {
-    unoptimized: true,
+    loader: "custom",
+    loaderFile: "./src/lib/portfolio-image-loader.ts",
+    deviceSizes: [640, 1280, 1920],
+    imageSizes: [],
   },
   allowedDevOrigins: ["127.0.0.1"],
   webpack(config, { dev }) {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { getBasePath } from "@/lib/assets";
 
 import innerGreenSource from "./sources/inner-green-3d.html?raw";
+import plantFusionSource from "./sources/plant-particle-fusion.js?raw";
 
 export const SYLVA_LIVING_WORLD_VARIANTS = ["living-green", "black-ember", "sakura-sunset", "maple-autumn", "sequoia-mist"] as const;
 export type SylvaLivingWorldVariant = (typeof SYLVA_LIVING_WORLD_VARIANTS)[number];
@@ -11,6 +12,7 @@ export type SylvaLivingWorldSceneProps = {
   className?: string;
   style?: CSSProperties;
   active?: boolean;
+  plantParticles?: boolean;
 };
 
 const SCENE_ONLY_MARKUP = (label: string) => `<main class="hero" id="hero">
@@ -41,6 +43,9 @@ body {
 #scene {
   pointer-events: auto !important;
 }
+
+html.has-synthesis-cursor,
+html.has-synthesis-cursor * { cursor: none !important; }
 </style>`;
 
 export const SAKURA_SUNSET_STYLE = `<style data-threeui-sylva-sakura-sunset>
@@ -1625,7 +1630,7 @@ export function applyBlackEmberVariant(source: string) {
   );
 }
 
-function buildSceneDocument(reducedMotion: boolean, variant: SylvaLivingWorldVariant, basePath: string = "") {
+function buildSceneDocument(reducedMotion: boolean, variant: SylvaLivingWorldVariant, basePath: string = "", plantParticles = false) {
   const canonicalSource = innerGreenSource.replace(/\r\n?/g, "\n");
   const presentationStart = canonicalSource.indexOf('<main class="hero" id="hero">');
   const runtimeStart = canonicalSource.indexOf('<script src="inner-green-assets/three.min.js"></script>');
@@ -1639,7 +1644,8 @@ function buildSceneDocument(reducedMotion: boolean, variant: SylvaLivingWorldVar
 
   let documentSource = `${canonicalSource.slice(0, presentationStart)}${SCENE_ONLY_MARKUP(VARIANT_LABELS[variant])}\n\n${canonicalSource.slice(runtimeStart)}`
     .replace("<title>Sylva — Into the living world</title>", `<title>${VARIANT_LABELS[variant]}</title>`)
-    .replace("</head>", `<base href="${sylvaBase}">${SCENE_ONLY_STYLE}${VARIANT_STYLES[variant] ?? ""}</head>`)
+    .replace("<head>", `<head><base href="${sylvaBase}">`)
+    .replace("</head>", `${SCENE_ONLY_STYLE}${VARIANT_STYLES[variant] ?? ""}</head>`)
     .replace(
       '<script src="inner-green-assets/three.min.js"></script>',
       `<script data-threeui-three-runtime src="${threeRuntimeSrc}"></script>`,
@@ -1649,15 +1655,40 @@ function buildSceneDocument(reducedMotion: boolean, variant: SylvaLivingWorldVar
   if (variant === "sakura-sunset") documentSource = applySakuraSunsetVariant(documentSource);
   if (variant === "maple-autumn") documentSource = applyMapleAutumnVariant(documentSource);
   if (variant === "sequoia-mist") documentSource = applySequoiaMistVariant(documentSource);
+  if (plantParticles) {
+    documentSource = replaceRequired(documentSource, "  function build() {", `${plantFusionSource}\n  function build() {`, "plant particle functions");
+    documentSource = replaceRequired(documentSource, "    scene.add(nearGroup);", "    scene.add(nearGroup);\n    buildPlantFusion(nearLimbs);", "plant particle creation");
+    documentSource = replaceRequired(documentSource, "    renderer.render(scene, camera);", "    updatePlantFusion(dt);\n    renderer.render(scene, camera);", "shared plant particle rendering");
+  }
 
   documentSource = replaceRequired(
     documentSource,
     "  var pointer = { x: 0, y: 0 }, smooth = { x: 0, y: 0 };",
-    `  var hostActive = true;
+    `  var hostActive = true, hostFrame = 0, hostLastPaint = 0;
+  function hostLoop() {
+    hostFrame = 0;
+    if (!hostActive || document.hidden) return;
+    var now = performance.now();
+    if (REDUCED || now - hostLastPaint >= ${plantParticles ? "1000 / 30" : "0"}) {
+      hostLastPaint = now;
+      tick();
+    }
+    if (!REDUCED) hostFrame = requestAnimationFrame(hostLoop);
+  }
+  function syncHostLoop() {
+    cancelAnimationFrame(hostFrame);
+    hostFrame = 0;
+    if (hostActive && !document.hidden) {
+      lastTick = performance.now();
+      if (clock) clock.getDelta();
+      hostFrame = requestAnimationFrame(hostLoop);
+    }
+  }
+  document.addEventListener('visibilitychange', syncHostLoop);
   window.addEventListener('message', function (event) {
-    if (event.data && event.data.type === 'synthesis:scene-activity') {
+    if (event.source === parent && event.data && event.data.type === 'synthesis:scene-activity') {
       hostActive = event.data.active !== false;
-      if (hostActive) lastTick = performance.now();
+      syncHostLoop();
     }
   });
 
@@ -1671,12 +1702,12 @@ function buildSceneDocument(reducedMotion: boolean, variant: SylvaLivingWorldVar
     "scene render activity gate",
   );
 
-  if (reducedMotion) {
-    documentSource = documentSource.replace(
-      "(function loop() { requestAnimationFrame(loop); tick(); })();",
-      "(function loop() { if (!REDUCED) requestAnimationFrame(loop); tick(); })();",
-    );
-  }
+  documentSource = replaceRequired(
+    documentSource,
+    "(function loop() { requestAnimationFrame(loop); tick(); })();",
+    "syncHostLoop();",
+    "scene demand-driven loop",
+  );
 
   return documentSource;
 }
@@ -1686,6 +1717,7 @@ export function SylvaLivingWorldScene({
   className = "",
   style,
   active = true,
+  plantParticles = false,
 }: SylvaLivingWorldSceneProps) {
   const safeVariant = SYLVA_LIVING_WORLD_VARIANTS.includes(variant) ? variant : "living-green";
   const hostRef = useRef<HTMLDivElement>(null);
@@ -1698,6 +1730,43 @@ export function SylvaLivingWorldScene({
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
   ));
   const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!ready) return;
+    const frame = frameRef.current;
+    const sceneDocument = frame?.contentDocument;
+    if (!frame || !sceneDocument) return;
+
+    const precisePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const syncCursor = () => sceneDocument.documentElement.classList.toggle(
+      "has-synthesis-cursor",
+      precisePointer.matches && document.documentElement.classList.contains("has-syn-instrument-cursor"),
+    );
+    const relay = (event: MouseEvent | PointerEvent) => {
+      if ("pointerType" in event && event.pointerType !== "mouse") return;
+      const rect = frame.getBoundingClientRect();
+      window.dispatchEvent(new CustomEvent("synthesis:scene-pointer", { detail: {
+        type: event.type,
+        x: rect.left + event.clientX * rect.width / frame.clientWidth,
+        y: rect.top + event.clientY * rect.height / frame.clientHeight,
+        button: event.button,
+      } }));
+    };
+    const hideCursor = () => window.dispatchEvent(new CustomEvent("synthesis:scene-pointer", { detail: { type: "hide" } }));
+    const pointerEvents = ["pointermove", "pointerdown", "pointerup", "pointercancel"] as const;
+    syncCursor();
+    precisePointer.addEventListener("change", syncCursor);
+    pointerEvents.forEach(type => sceneDocument.addEventListener(type, relay, { passive: true, capture: true }));
+    sceneDocument.addEventListener("mouseleave", relay);
+    sceneDocument.addEventListener("keydown", hideCursor);
+    return () => {
+      sceneDocument.documentElement.classList.remove("has-synthesis-cursor");
+      precisePointer.removeEventListener("change", syncCursor);
+      pointerEvents.forEach(type => sceneDocument.removeEventListener(type, relay, true));
+      sceneDocument.removeEventListener("mouseleave", relay);
+      sceneDocument.removeEventListener("keydown", hideCursor);
+    };
+  }, [ready, reducedMotion, safeVariant]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -1724,7 +1793,7 @@ export function SylvaLivingWorldScene({
 
   const basePath = getBasePath();
 
-  const source = useMemo(() => buildSceneDocument(reducedMotion, safeVariant, basePath), [reducedMotion, safeVariant, basePath]);
+  const source = useMemo(() => buildSceneDocument(reducedMotion, safeVariant, basePath, plantParticles), [reducedMotion, safeVariant, basePath, plantParticles]);
   const sceneActive = active && hostVisible && documentVisible;
   const mounted = true;
   const label = VARIANT_LABELS[safeVariant];

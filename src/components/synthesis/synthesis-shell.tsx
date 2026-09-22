@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -11,12 +12,16 @@ import {
   type SynthesisRouteReadyDetail,
   type SynthesisTransitionCover,
 } from "./route-events";
-import { VgpuSignalField } from "@/components/vgpu/vgpu-signal-field";
-import { SylvaLivingWorldScene } from "./sylva-living-world-scene";
+import { PlantParticleHero } from "./plant-particle-hero";
 import { TransitionLink } from "./transition-link";
 import { InstrumentCursor } from "./instrument-cursor";
 
 gsap.registerPlugin(useGSAP);
+
+const VgpuSignalField = dynamic(
+  () => import("@/components/vgpu/vgpu-signal-field").then((module) => module.VgpuSignalField),
+  { ssr: false },
+);
 
 type RoutePhase = "idle" | "leaving" | "loading" | "entering";
 
@@ -43,7 +48,7 @@ const ignoreRouteFieldStats = () => undefined;
 const ignoreRouteFieldStatus = () => undefined;
 
 export function SynthesisShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const pathname = (usePathname() || "/").replace(/\/+$/, "") || "/";
   const normalizedPath = (pathname || "/").replace(/^\/(legendary-doodle1\.0|chuanqi-tuya-1\.0)/, "");
   const isHome = normalizedPath === "" || normalizedPath === "/" || normalizedPath === "/synthesis" || normalizedPath === "/synthesis/";
   const isAbout = normalizedPath === "/synthesis/about" || normalizedPath === "/synthesis/about/" || normalizedPath === "/about";
@@ -58,17 +63,22 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
   const [routeFieldActive, setRouteFieldActive] = useState(false);
   const [routeFieldOrigin, setRouteFieldOrigin] = useState<readonly [number, number]>([0.5, 0.5]);
   const [routeFieldPulse, setRouteFieldPulse] = useState(0);
-  const [homeSceneActive, setHomeSceneActive] = useState(isHome);
-  const [prevIsHome, setPrevIsHome] = useState(isHome);
-  if (prevIsHome !== isHome) {
-    setPrevIsHome(isHome);
-    setHomeSceneActive(isHome);
-  }
   const loaderNode = useRef<HTMLDivElement>(null);
   const loaderIntroTimeline = useRef<gsap.core.Timeline | null>(null);
   const loaderExitTimeline = useRef<gsap.core.Timeline | null>(null);
   const loaderStartedAt = useRef(0);
   const primaryNav = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const work = document.getElementById("work");
+    const link = primaryNav.current?.querySelector('a[href="#work"]');
+    if (!isHome || !work || !link) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) link.setAttribute("aria-current", "location");
+      else link.removeAttribute("aria-current");
+    }, { rootMargin: "-20% 0px -40% 0px" });
+    observer.observe(work);
+    return () => { observer.disconnect(); link.removeAttribute("aria-current"); };
+  }, [isHome, pathname]);
   const routeTransitionNode = useRef<HTMLDivElement>(null);
   const handoffNode = useRef<HTMLDivElement>(null);
   const handoffSource = useRef<SynthesisTransitionCover | null>(null);
@@ -307,30 +317,6 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
     const fallback = window.setTimeout(() => setLoaded(true), 1800);
     return () => window.clearTimeout(fallback);
   }, []);
-
-  useEffect(() => {
-    if (!loaded || routeFieldMounted || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const mount = () => setRouteFieldMounted(true);
-    if ("requestIdleCallback" in window) {
-      const idle = window.requestIdleCallback(mount, { timeout: 1800 });
-      return () => window.cancelIdleCallback(idle);
-    }
-    const timer = setTimeout(mount, 500);
-    return () => clearTimeout(timer);
-  }, [loaded, routeFieldMounted]);
-
-  useEffect(() => {
-    if (!isHome) return;
-
-    const hero = document.querySelector(".synthesis-hero");
-    if (!hero || typeof IntersectionObserver === "undefined") return;
-
-    const observer = new IntersectionObserver(([entry]) => {
-      setHomeSceneActive(entry?.isIntersecting ?? true);
-    });
-    observer.observe(hero);
-    return () => observer.disconnect();
-  }, [isHome]);
 
   useEffect(() => {
     const onNavigationStart = (event: Event) => {
@@ -605,7 +591,7 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
         <b className="route-transition__signal" aria-hidden="true" />
       </div>
       <div className={`synthesis-persistent-scene${isHome ? " is-active" : ""}`} aria-hidden="true">
-        {isHome ? <SylvaLivingWorldScene variant="black-ember" active={homeSceneActive} /> : null}
+        {isHome ? <PlantParticleHero /> : null}
       </div>
       {!isLabRoute && (
         <header className="synthesis-header">

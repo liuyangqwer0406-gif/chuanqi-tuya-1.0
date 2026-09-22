@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "images:prepare": "node scripts/prepare-images.mjs",
+    "predev": "npm run images:prepare",
+    "prebuild": "npm run images:prepare",
+    "postbuild": "node scripts/fix-export-segments.mjs",
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
@@ -34,6 +38,7 @@
     "@webgpu/types": "^0.1.72",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
+    "sharp": "^0.35.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

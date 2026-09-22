@@ -69,7 +69,7 @@
   pointer-events: none;
 }
 
-.heroTitle { align-self: center; }
+.heroTitle { min-width: 0; align-self: center; padding-right: clamp(20px, 3vw, 48px); }
 
 .eyebrow,
 .sectionLabel,
@@ -87,10 +87,10 @@
 .hero h1 {
   max-width: 1180px;
   margin-top: var(--space-5);
-  font-size: clamp(64px, 9.2vw, 154px);
+  font-size: clamp(44px, 6.4vw, 110px);
   font-weight: 250;
   letter-spacing: -.075em;
-  line-height: .78;
+  line-height: .96;
 }
 
 .hero h1 span { display: block; }
@@ -98,6 +98,7 @@
 .hero h1 em { font-family: Georgia, "Times New Roman", serif; font-weight: 400; }
 
 .heroAside {
+  min-width: 0;
   display: grid;
   align-content: end;
   min-height: 46vh;
@@ -179,17 +180,18 @@
   letter-spacing: .12em;
 }
 
-.profileCopy { padding: 116px var(--syn-gutter) 150px; }
-.sectionLabel { display: flex; justify-content: space-between; gap: var(--space-5); color: var(--color-muted-light); }
+.profileCopy { min-width: 0; padding: clamp(64px, 7vw, 100px) var(--syn-gutter); }
+.sectionLabel { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; color: var(--color-muted-light); }
+.sectionLabel > span { white-space: nowrap; }
 .sectionLabel span:first-child { color: var(--color-signal); }
 
 .profile h2 {
   max-width: 980px;
-  margin-top: 150px;
-  font-size: clamp(52px, 7.7vw, 128px);
+  margin-top: clamp(56px, 6vw, 96px);
+  font-size: clamp(40px, 5.7vw, 88px);
   font-weight: 260;
   letter-spacing: -.07em;
-  line-height: .84;
+  line-height: 1;
   text-wrap: balance;
 }
 
@@ -208,14 +210,15 @@
 
 .profileLead {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8vw;
-  margin-top: 96px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 48px;
   padding-top: 30px;
   border-top: var(--rule-light);
 }
 
 .profileLead p {
+  max-width: 52ch;
   font-family: var(--font-body-synthesis);
   font-size: var(--text-body);
   line-height: 1.75;
@@ -227,7 +230,7 @@
 .practiceMap {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 110px;
+  margin-top: 64px;
   border-top: var(--rule-light);
   border-left: var(--rule-light);
 }
@@ -240,7 +243,7 @@
 }
 
 .practiceMap article > span { color: var(--color-signal); font-size: var(--text-micro); letter-spacing: .12em; }
-.practiceMap h3 { margin-top: 58px; font-size: 23px; font-weight: 500; }
+.practiceMap h3 { margin-top: 40px; font-size: clamp(18px, 1.6vw, 23px); font-weight: 500; line-height: 1.35; }
 .practiceMap p { max-width: 320px; margin-top: var(--space-3); color: var(--color-muted-light); font-family: var(--font-body-synthesis); font-size: 13px; line-height: 1.65; }
 
 .method {
@@ -279,7 +282,7 @@
   font-size: clamp(54px, 7.4vw, 118px);
   font-weight: 250;
   letter-spacing: -.07em;
-  line-height: .82;
+  line-height: .98;
 }
 
 .methodHead p {
@@ -342,7 +345,7 @@
   font-size: clamp(46px, 7.6vw, 124px);
   font-weight: 250;
   letter-spacing: -.07em;
-  line-height: .82;
+  line-height: .98;
 }
 
 .methodCopy h3 span { margin-right: .16em; opacity: .16; transition: opacity 180ms ease; }
@@ -366,10 +369,10 @@
 .experienceHead .sectionLabel { border-right: var(--rule-light); }
 .experienceHead h2 {
   align-self: end;
-  font-size: clamp(58px, 7.2vw, 112px);
+  font-size: clamp(40px, 6vw, 96px);
   font-weight: 260;
   letter-spacing: -.075em;
-  line-height: .78;
+  line-height: 1;
 }
 .experienceHead h2 > span { display: block; white-space: nowrap; }
 
@@ -422,7 +425,7 @@
   font-size: clamp(62px, 10.8vw, 170px);
   font-weight: 250;
   letter-spacing: -.08em;
-  line-height: .78;
+  line-height: .98;
 }
 
 .contact h2 em { color: var(--color-signal); font-family: Georgia, "Times New Roman", serif; font-weight: 400; }
@@ -440,24 +443,27 @@
 .contact footer a { min-height: 44px; color: var(--color-signal); }
 
 @media (max-width: 800px) {
-  .heroGrid { grid-template-columns: 1fr; padding: 106px var(--space-4) 42px; }
-  .heroTitle { align-self: end; }
-  .hero h1 { font-size: clamp(58px, 17vw, 88px); }
+  .heroGrid { grid-template-columns: minmax(0, 1fr); padding: 106px var(--space-4) 42px; }
+  .heroTitle { align-self: end; padding-right: 0; }
+  .hero h1 { font-size: clamp(38px, 12.5vw, 80px); }
   .heroAside { min-height: auto; margin-top: 56px; padding: 24px 0 0; border-top: var(--rule-dark); border-left: 0; }
   .heroMeta { font-size: 8px; }
   .profile { grid-template-columns: 1fr; }
   .portrait { position: relative; height: 74svh; border-right: 0; border-bottom: var(--rule-light); }
-  .profileCopy { padding: 76px var(--space-5) 100px; }
-  .profile h2 { margin-top: 96px; }
+  .profileCopy { padding: 56px var(--space-5) 72px; }
+  .profile h2 { margin-top: 56px; }
   .profileLead { grid-template-columns: 1fr; gap: var(--space-6); }
   .practiceMap { grid-template-columns: 1fr; }
   .method { height: 320svh; }
   .methodHead { top: 86px; display: block; }
+  .methodHead h2 { font-size: clamp(32px, 9.6vw, 60px); }
   .methodHead p { max-width: 300px; margin-top: var(--space-5); }
   .methodImage { width: 66vw; }
   .methodCopy { display: block; }
   .methodCopy > p { margin-top: var(--space-5); text-align: left; }
   .experienceHead { grid-template-columns: 1fr; min-height: 380px; }
+  .experienceHead > * { padding-block: 40px; }
+  .experienceHead h2 { font-size: clamp(38px, 11.5vw, 72px); }
   .experienceHead .sectionLabel { min-height: 120px; border-right: 0; border-bottom: var(--rule-light); }
   .timeline li { grid-template-columns: 1fr; }
   .timeline time { border-right: 0; }
@@ -471,6 +477,9 @@
 @media (prefers-reduced-motion: reduce) {
   .heroCanvas,
   .heroFallback { transition: none; }
+}
+
+@media (max-width: 800px), (max-height: 680px), (prefers-reduced-motion: reduce) {
   .method { height: auto; padding: 100px var(--space-5); }
   .methodStage { position: relative; height: auto; min-height: 0; overflow: visible; perspective: none; }
   .methodHead,
@@ -482,6 +491,6 @@
   .methodCopy h3 span { opacity: 1 !important; }
 }
 
-@media (max-width: 540px) and (prefers-reduced-motion: reduce) {
+@media (max-width: 540px) {
   .methodImages { grid-template-columns: 1fr; }
 }

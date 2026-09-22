@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
-  KeyboardEvent,
   PointerEvent as ReactPointerEvent,
   ReactNode,
 } from "react";
@@ -15,6 +14,9 @@ type LiquidLinkProps = {
   className?: string;
   variant?: "pill" | "orb";
   ariaLabel?: string;
+  alwaysOn?: boolean;
+  "data-reveal-item"?: boolean;
+  "data-case-reveal-item"?: boolean;
 };
 
 type ShaderMessage = {
@@ -128,10 +130,7 @@ const BRIDGE_SCRIPT = `
           window.__ripple((data.x - b.width / 2) / s, (data.y - b.height / 2) / s);
         }
       } else if (data.type === 'activity') {
-        if (typeof running !== 'undefined') {
-          running = data.value !== false;
-          if (running && typeof frame === 'function') requestAnimationFrame(frame);
-        }
+        if (typeof window.__setActive === 'function') window.__setActive(data.value !== false);
       }
     });
 
@@ -140,7 +139,8 @@ const BRIDGE_SCRIPT = `
 </script>`;
 
 function buildSource(variant: "pill" | "orb") {
-  let src = rawShaderSource;
+  // The iframe draws only the rim. Its hidden label needs no external fonts.
+  let src = rawShaderSource.replace(/<link[^>]+href="https:\/\/fonts\.[^>]+>/g, "");
   if (variant === "orb") {
     src = src.replace("<body>", '<body data-shape="orb">');
   }
@@ -153,15 +153,18 @@ export function LiquidLink({
   className = "",
   variant = "pill",
   ariaLabel,
+  alwaysOn = true,
+  "data-reveal-item": revealItem,
+  "data-case-reveal-item": caseRevealItem,
 }: LiquidLinkProps) {
   const host = useRef<HTMLAnchorElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   const hovered = useRef(false);
-  const focused = useRef(false);
-  const intersects = useRef(true);
+  const intersects = useRef(false);
   const active = useRef(false);
   const activityTimer = useRef(0);
   const [ready, setReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const source = useMemo(() => buildSource(variant), [variant]);
 
@@ -171,17 +174,19 @@ export function LiquidLink({
 
   const syncActivity = useCallback((deferInactive = false) => {
     window.clearTimeout(activityTimer.current);
-    const nextActive = !reducedMotion() && intersects.current && document.visibilityState !== "hidden";
+    const nextActive = !reducedMotion() && intersects.current && !document.hidden && (alwaysOn || hovered.current);
+    if (nextActive) setMounted(true);
     const apply = () => {
       active.current = nextActive;
       send({ type: "activity", value: nextActive });
+      if (alwaysOn) send({ type: "hover", value: true });
     };
     if (!nextActive && deferInactive) {
       activityTimer.current = window.setTimeout(apply, 320);
     } else {
       apply();
     }
-  }, [send]);
+  }, [send, alwaysOn]);
 
   const pointerData = (event: ReactPointerEvent<HTMLAnchorElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -206,14 +211,18 @@ export function LiquidLink({
 
     observer.observe(anchor);
     document.addEventListener("visibilitychange", onVisibilityChange);
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    motionQuery.addEventListener("change", onVisibilityChange);
     return () => {
       window.clearTimeout(activityTimer.current);
       observer.disconnect();
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      motionQuery.removeEventListener("change", onVisibilityChange);
     };
   }, [syncActivity]);
 
   useEffect(() => {
+    if (!mounted) return;
     let probes = 0;
     let probeTimer = 0;
     const receiveReady = (event: MessageEvent) => {
@@ -222,6 +231,7 @@ export function LiquidLink({
       window.clearInterval(probeTimer);
       setReady(true);
       send({ type: "activity", value: active.current });
+      if (alwaysOn || hovered.current) send({ type: "hover", value: true });
     };
 
     window.addEventListener("message", receiveReady);
@@ -235,7 +245,7 @@ export function LiquidLink({
       window.clearInterval(probeTimer);
       window.removeEventListener("message", receiveReady);
     };
-  }, [send]);
+  }, [send, mounted, alwaysOn]);
 
   const handlePointerEnter = (event: ReactPointerEvent<HTMLAnchorElement>) => {
     hovered.current = event.pointerType === "mouse";
@@ -253,8 +263,8 @@ export function LiquidLink({
 
   const handlePointerLeave = (event: ReactPointerEvent<HTMLAnchorElement>) => {
     hovered.current = false;
-    if (!reducedMotion() && !focused.current && event.pointerType === "mouse") {
-      send({ type: "hover", value: false });
+    if (!reducedMotion() && event.pointerType === "mouse") {
+      send({ type: "hover", value: alwaysOn });
     }
     syncActivity(true);
   };
@@ -272,30 +282,7 @@ export function LiquidLink({
   const handlePointerCancel = () => {
     if (!reducedMotion()) {
       send({ type: "cancel" });
-      send({ type: "hover", value: false });
-    }
-  };
-
-  const handleFocus = () => {
-    focused.current = true;
-    syncActivity();
-    if (!reducedMotion()) send({ type: "hover", value: true });
-  };
-
-  const handleBlur = () => {
-    focused.current = false;
-    if (!reducedMotion() && !hovered.current) send({ type: "hover", value: false });
-    syncActivity(true);
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLAnchorElement>) => {
-    if (reducedMotion() || event.repeat || (event.key !== "Enter" && event.key !== " ")) return;
-    send({ type: "press", value: true });
-  };
-
-  const handleKeyUp = (event: KeyboardEvent<HTMLAnchorElement>) => {
-    if (!reducedMotion() && (event.key === "Enter" || event.key === " ")) {
-      send({ type: "press", value: false });
+      send({ type: "hover", value: alwaysOn });
     }
   };
 
@@ -303,8 +290,10 @@ export function LiquidLink({
     <TransitionLink
       ref={host}
       href={href}
-      className={`liquid-link liquid-link--${variant}${ready ? " is-shader-ready" : ""}${className ? ` ${className}` : ""}`}
+      className={`liquid-link liquid-link--${variant}${alwaysOn ? " liquid-link--always-on" : ""}${ready ? " is-shader-ready" : ""}${className ? ` ${className}` : ""}`}
       data-state={ready ? "ready" : "loading"}
+      data-reveal-item={revealItem || undefined}
+      data-case-reveal-item={caseRevealItem || undefined}
       aria-label={ariaLabel}
       onPointerEnter={handlePointerEnter}
       onPointerMove={handlePointerMove}
@@ -312,12 +301,8 @@ export function LiquidLink({
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      onKeyUp={handleKeyUp}
     >
-      <iframe
+      {mounted && <iframe
         key={variant}
         ref={frame}
         className="liquid-link__shader"
@@ -330,11 +315,11 @@ export function LiquidLink({
         onLoad={() => {
           setReady(true);
           send({ type: "activity", value: active.current });
-          if (!reducedMotion() && (hovered.current || focused.current)) {
+          if (!reducedMotion() && (alwaysOn || hovered.current)) {
             send({ type: "hover", value: true });
           }
         }}
-      />
+      />}
       <span className="liquid-link__icon" aria-hidden="true"><i /><i /><i /></span>
       <span className="liquid-link__label">{children}</span>
       <span className="liquid-link__arrow" aria-hidden="true">↗</span>

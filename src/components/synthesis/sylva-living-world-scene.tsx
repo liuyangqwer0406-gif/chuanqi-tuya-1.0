@@ -3,10 +3,9 @@
 import dynamic from "next/dynamic";
 import type { SylvaLivingWorldSceneProps as SceneProps } from "../../shaders/sylva-living-world/SylvaLivingWorldScene";
 
-export {
-  SYLVA_LIVING_WORLD_VARIANTS,
-  type SylvaLivingWorldSceneProps,
-  type SylvaLivingWorldVariant,
+export type {
+  SylvaLivingWorldSceneProps,
+  SylvaLivingWorldVariant,
 } from "../../shaders/sylva-living-world/SylvaLivingWorldScene";
 
 export const SylvaLivingWorldScene = dynamic<SceneProps>(

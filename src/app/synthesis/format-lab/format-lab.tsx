@@ -515,7 +515,7 @@ export function FormatLab() {
 
             <div className="format-quote-block">
               <p className="format-quote-text">
-                "A BORDER DOES NOT CONTAIN THE WORK; IT GIVES THE EYE A PLACE TO PUSH AGAINST."
+                &quot;A BORDER DOES NOT CONTAIN THE WORK; IT GIVES THE EYE A PLACE TO PUSH AGAINST.&quot;
               </p>
               <div style={{ fontSize: "13px", color: "#f2efe7", marginTop: 4, fontFamily: "var(--font-body-synthesis)" }}>
                 “画幅绝非被动盛放内容的容器，而是为视线提供对抗支点的无形引力场。”

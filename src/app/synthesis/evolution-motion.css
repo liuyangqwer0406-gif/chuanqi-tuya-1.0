@@ -1,0 +1,93 @@
+.evolution-hero { --hero-travel: 0; height: 165svh; }
+.evolution-hero__field { position: absolute; top: 5vh; right: 6%; width: 67%; height: 77vh; }
+.evolution-particles { display: block; width: 100%; height: 100%; }
+.plant-particle-hero, .plant-particle-hero .sylva-living-world-scene { position: absolute; inset: 0; width: 100%; height: 100%; }
+.evolution-hero .synthesis-hero__copy { bottom: 10vh; transform: translateY(calc(var(--hero-travel) * -72px)); }
+.evolution-hero .synthesis-hero__copy > p, .evolution-hero h1 { opacity: calc(1 - var(--hero-travel) * .72); }
+.evolution-hero .synthesis-hero__copy > p { color: var(--color-signal); }
+.evolution-hero h1 { font-size: clamp(64px, 10.5vw, 160px); }
+.evolution-hero h1 > span { overflow: hidden; padding-bottom: .1em; }
+.evolution-hero h1 > span:last-child { align-self: flex-start; margin-left: 9vw; }
+.evolution-hero h1 b { display: block; font-weight: inherit; transform: translateY(110%); }
+.is-loaded .evolution-hero h1 b { animation: evolution-title-in 900ms cubic-bezier(.16,1,.3,1) both; }
+.is-loaded .evolution-hero h1 > span:last-child b { animation-delay: 110ms; }
+@keyframes evolution-title-in { from { transform: translateY(110%); } to { transform: translateY(0); } }
+.evolution-hero__coordinates { position: absolute; top: 104px; left: var(--syn-gutter); right: var(--syn-gutter); display: flex; justify-content: space-between; color: var(--color-muted-dark); font-size: 9px; letter-spacing: .14em; }
+.evolution-hero__coordinates > span:first-child::before { content: ""; display: inline-block; width: 5px; height: 5px; margin-right: 10px; background: var(--color-signal); }
+.evolution-hero__actions { display: grid; justify-items: end; gap: 18px; }
+.evolution-hero__actions > a:last-child { display: flex; gap: 28px; padding-block: 8px; font-size: 9px; letter-spacing: .1em; color: var(--color-paper); }
+.evolution-hero__actions > a:last-child span { transition: transform 220ms ease; }
+
+.evolution-story { position: relative; height: 330svh; margin-inline: var(--syn-frame); margin-top: 100px; background: var(--color-paper); color: var(--color-black); scroll-margin-top: 72px; }
+.evolution-story::before { content: ""; position: absolute; left: 0; right: 0; top: -50px; height: 51px; background: var(--color-paper); clip-path: polygon(0 95%, 0 65%, 20% 65%, 20% 35%, 42% 35%, 42% 0, 65% 0, 65% 35%, 84% 35%, 84% 65%, 100% 65%, 100% 100%); }
+.evolution-story__sticky { position: sticky; top: 72px; height: calc(100svh - 72px); min-height: 620px; overflow: hidden; display: grid; grid-template-rows: auto minmax(0, 1fr) 64px; }
+.evolution-story__header { position: relative; z-index: 1; padding: 34px var(--syn-gutter) 26px; display: grid; grid-template-columns: 1.2fr 1fr; column-gap: 8vw; align-items: end; border-bottom: 1px solid #11111124; }
+.evolution-story__header > p:first-child { grid-column: 1 / -1; margin-bottom: 24px; font-size: 9px; letter-spacing: .15em; color: #746e63; }
+.evolution-story__header h2 { font-size: clamp(42px, 5.8vw, 90px); font-weight: 260; line-height: .86; letter-spacing: -.065em; }
+.evolution-story__header h2 span { color: #8a8274; }
+.evolution-story__header > p:last-child { padding-bottom: 4px; font-size: 12px; line-height: 1.9; color: #686257; }
+.evolution-story__stage { position: relative; display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
+.evolution-story__visual { position: relative; min-height: 0; }
+.evolution-story__visual > span { position: absolute; bottom: 25px; left: var(--syn-gutter); color: #777064; font-size: 9px; letter-spacing: .12em; }
+.evolution-story__chapters { position: relative; display: grid; align-items: center; padding: 28px var(--syn-gutter) 28px 5vw; }
+.evolution-story__chapter { position: relative; grid-area: 1 / 1; visibility: hidden; opacity: 0; transform: translateY(32px); transition: opacity 380ms ease, transform 600ms cubic-bezier(.16,1,.3,1), visibility 0s 600ms; }
+.evolution-story__chapter.is-current { visibility: visible; opacity: 1; transform: translateY(0); transition-delay: 0s; }
+.evolution-story__number { position: absolute; z-index: 0; top: -60px; right: -10px; font-size: clamp(180px, 24vw, 370px); font-weight: 260; letter-spacing: -.08em; line-height: 1; color: #11111107; pointer-events: none; }
+.evolution-story__label { position: relative; font-size: 9px; letter-spacing: .12em; color: #8f3e21; margin-bottom: 25px; }
+.evolution-story__chapter h3 { position: relative; font-size: clamp(38px, 4.6vw, 72px); line-height: 1; letter-spacing: -.05em; font-weight: 260; white-space: pre-line; }
+.evolution-story__chapter h4 { position: relative; margin-top: 18px; font-size: 21px; font-weight: 400; }
+.evolution-story__body { position: relative; max-width: 38ch; margin-top: 24px; color: #686257; font-size: 14px; line-height: 1.85; text-wrap: pretty; }
+.evolution-story__nav { position: relative; display: flex; border-top: 1px solid #11111124; }
+.evolution-story__nav::before { content: ""; position: absolute; top: -2px; left: 0; width: 100%; height: 2px; background: var(--color-signal); transform: scaleX(var(--practice-progress, 0)); transform-origin: left; }
+.evolution-story__nav button { display: flex; align-items: center; gap: 16px; flex: 1; padding: 0 32px; border: 0; border-right: 1px solid #11111124; color: #777064; background: transparent; font: inherit; font-size: 12px; cursor: pointer; transition: background-color 220ms, color 220ms; }
+.evolution-story__nav button:last-child { border-right: 0; }
+.evolution-story__nav button > span { font-size: 10px; }
+.evolution-story__nav button i { margin-left: auto; font-style: normal; }
+.evolution-story__nav button[aria-current] { background: var(--color-black); color: var(--color-paper); }
+.evolution-story__nav button[aria-current] > span { color: var(--color-signal); }
+.evolution-story__nav button:focus-visible { outline: 2px solid var(--color-signal); outline-offset: -5px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .evolution-hero__actions > a:last-child:hover span { transform: translateY(4px); }
+  .evolution-story__nav button:hover { color: #bd431e; }
+}
+
+@media (max-width: 1100px) {
+  .evolution-story__header { padding-block: 28px 22px; }
+  .evolution-story__chapter h3 { font-size: clamp(40px, 5vw, 64px); }
+  .evolution-story__chapters { padding-left: 2vw; }
+}
+@media (max-width: 800px), (max-height: 680px), (prefers-reduced-motion: reduce) {
+  .evolution-story { height: auto; }
+  .evolution-story__sticky { position: relative; top: 0; height: auto; min-height: 0; display: block; overflow: visible; }
+  .evolution-story__header { padding-block: 38px; }
+  .evolution-story__stage { display: block; }
+  .evolution-story__visual { height: 320px; }
+  .evolution-story__chapters { display: block; padding: 0 var(--syn-gutter); }
+  .evolution-story__chapter { visibility: visible; opacity: 1; transform: none; padding: 42px 0; border-top: 1px solid #11111124; scroll-margin-top: 88px; }
+  .evolution-story__number { right: 0; top: 25px; font-size: 190px; }
+  .evolution-story__nav { min-height: 64px; }
+}
+@media (max-width: 800px) {
+  .evolution-hero { height: 135svh; }
+  .evolution-hero__field { top: 8vh; right: 0; width: 100%; height: 60vh; }
+  .evolution-hero .synthesis-hero__copy { bottom: 6vh; }
+  .evolution-hero h1 { font-size: clamp(35px, 9.5vw, 76px); }
+  .evolution-hero h1 > span:last-child { margin-left: 0; }
+  .evolution-hero__coordinates { top: 88px; font-size: 7px; }
+  .evolution-hero .synthesis-hero__foot { display: block; margin-top: 22px; }
+  .evolution-hero__actions { margin-top: 24px; justify-items: start; gap: 10px; }
+  .evolution-story { margin-top: 74px; }
+  .evolution-story__header { grid-template-columns: 1fr; }
+  .evolution-story__header h2 { font-size: clamp(30px, 9vw, 66px); line-height: 1; }
+  .evolution-story__header > p:last-child { margin-top: 24px; font-size: 12px; }
+  .evolution-story__chapter h3 { font-size: clamp(30px, 9.2vw, 64px); }
+  .evolution-story__nav button { gap: 8px; padding: 0 12px; font-size: 10px; }
+  .evolution-story__nav button i { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .evolution-hero { height: 100svh; }
+  .evolution-hero .synthesis-hero__copy { transform: none; opacity: 1; }
+  .evolution-hero h1 b { animation: none !important; transform: none; }
+  .evolution-story__chapter, .evolution-story__nav button { transition: none; }
+}

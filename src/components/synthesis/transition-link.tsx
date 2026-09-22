@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ComponentProps, MouseEvent } from "react";
+import { useSmoothScroll } from "@/components/motion/smooth-motion-provider";
 import {
   SYNTHESIS_NAVIGATION_START,
   type SynthesisNavigationDetail,
@@ -15,6 +16,7 @@ const ROUTE_LEAVE_DURATION = 720;
 
 export function TransitionLink({ href, onClick, ...props }: TransitionLinkProps) {
   const router = useRouter();
+  const { scrollTo } = useSmoothScroll();
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
@@ -26,7 +28,6 @@ export function TransitionLink({ href, onClick, ...props }: TransitionLinkProps)
       event.shiftKey ||
       event.altKey ||
       typeof href !== "string" ||
-      href.startsWith("#") ||
       href.startsWith("mailto:") ||
       href.startsWith("http")
     ) return;
@@ -40,8 +41,10 @@ export function TransitionLink({ href, onClick, ...props }: TransitionLinkProps)
       return;
     }
 
-    const sameDocument = destination.pathname === window.location.pathname
+    const sameDocument = destination.pathname.replace(/\/$/, "") === window.location.pathname.replace(/\/$/, "")
       && destination.search === window.location.search;
+    const pointerInitiated = event.detail > 0;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches || !pointerInitiated;
 
     if (sameDocument) {
       event.preventDefault();
@@ -52,19 +55,17 @@ export function TransitionLink({ href, onClick, ...props }: TransitionLinkProps)
         const target = document.getElementById(decodeURIComponent(destination.hash.slice(1)));
         window.history.pushState(window.history.state, "", `${destination.pathname}${destination.search}${destination.hash}`);
         if (target) {
-          const top = target.getBoundingClientRect().top + window.scrollY - 88;
-          window.scrollTo({ top, behavior: "auto" });
+          const top = target.getBoundingClientRect().top + window.scrollY - Math.max(88, parseFloat(getComputedStyle(target).scrollMarginTop) || 0);
+          scrollTo(top, reducedMotion ? { immediate: true, duration: 0 } : { duration: .8 });
         }
       } else {
         window.history.replaceState(window.history.state, "", `${destination.pathname}${destination.search}`);
-        window.scrollTo({ top: 0, behavior: "auto" });
+        scrollTo(0, reducedMotion ? { immediate: true, duration: 0 } : { duration: .8 });
       }
       return;
     }
 
     event.preventDefault();
-    const pointerInitiated = event.detail > 0;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches || !pointerInitiated;
     const coverImage = document.querySelector<HTMLImageElement>("[data-transition-cover] img");
     let cover: SynthesisTransitionCover | undefined;
 

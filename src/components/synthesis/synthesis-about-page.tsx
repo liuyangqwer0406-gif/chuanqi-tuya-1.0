@@ -54,7 +54,7 @@ export function SynthesisAboutPage() {
     const method = methodRef.current;
     if (!method) return;
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const staticLayout = window.matchMedia("(max-width: 800px), (max-height: 680px), (prefers-reduced-motion: reduce)");
     const directions = [
       [-0.48, -0.18], [0.52, -0.14], [-0.44, 0.28], [0.48, 0.26], [-0.12, -0.42], [0.16, 0.46],
     ] as const;
@@ -62,7 +62,7 @@ export function SynthesisAboutPage() {
 
     const draw = () => {
       frame = 0;
-      if (reducedMotion.matches) {
+      if (staticLayout.matches) {
         imageRefs.current.forEach((image) => {
           if (!image) return;
           image.style.removeProperty("transform");
@@ -102,14 +102,14 @@ export function SynthesisAboutPage() {
 
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule, { passive: true });
-    reducedMotion.addEventListener("change", onMotionChange);
+    staticLayout.addEventListener("change", onMotionChange);
     schedule();
 
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
-      reducedMotion.removeEventListener("change", onMotionChange);
+      staticLayout.removeEventListener("change", onMotionChange);
     };
   }, []);
 

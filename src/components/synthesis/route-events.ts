@@ -30,6 +30,7 @@ export type SynthesisRouteReadyDetail = {
 };
 
 export function announceSynthesisRouteReady(pathname: string, degraded = false) {
+  pathname = pathname.replace(/\/+$/, "") || "/";
   document.documentElement.dataset.routeReadyPath = pathname;
   window.dispatchEvent(new CustomEvent<SynthesisRouteReadyDetail>(SYNTHESIS_ROUTE_READY, {
     detail: { pathname, degraded },

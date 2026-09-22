@@ -4,7 +4,7 @@
 
 @font-face {
   font-family: "Van Montserrat";
-  src: url("/sites/vanlent-dev-4f352424/root-8a5edab2/fonts/e8f2fbee2754df70-s.p.9b7a96b4.woff2") format("woff2");
+  src: url("../../public/sites/vanlent-dev-4f352424/root-8a5edab2/fonts/e8f2fbee2754df70-s.p.9b7a96b4.woff2") format("woff2");
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
@@ -12,7 +12,7 @@
 
 @font-face {
   font-family: "Portfolio CN";
-  src: url("/portfolio-assets/noto-sans-sc-subset.woff2") format("woff2");
+  src: url("../../public/portfolio-assets/noto-sans-sc-subset.woff2") format("woff2");
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
