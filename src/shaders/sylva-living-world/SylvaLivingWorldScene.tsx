@@ -1664,15 +1664,11 @@ function buildSceneDocument(reducedMotion: boolean, variant: SylvaLivingWorldVar
   documentSource = replaceRequired(
     documentSource,
     "  var pointer = { x: 0, y: 0 }, smooth = { x: 0, y: 0 };",
-    `  var hostActive = true, hostFrame = 0, hostLastPaint = 0;
+    `  var hostActive = true, hostFrame = 0;
   function hostLoop() {
     hostFrame = 0;
     if (!hostActive || document.hidden) return;
-    var now = performance.now();
-    if (REDUCED || now - hostLastPaint >= ${plantParticles ? "1000 / 30" : "0"}) {
-      hostLastPaint = now;
-      tick();
-    }
+    tick();
     if (!REDUCED) hostFrame = requestAnimationFrame(hostLoop);
   }
   function syncHostLoop() {
@@ -1742,26 +1738,51 @@ export function SylvaLivingWorldScene({
       "has-synthesis-cursor",
       precisePointer.matches && document.documentElement.classList.contains("has-syn-instrument-cursor"),
     );
+    let frameMetrics = { left: 0, top: 0, scaleX: 1, scaleY: 1 };
+    let measureFrameId = 0;
+    const measureFrame = () => {
+      measureFrameId = 0;
+      const rect = frame.getBoundingClientRect();
+      const contentWidth = frame.contentWindow?.innerWidth || frame.clientWidth || rect.width;
+      const contentHeight = frame.contentWindow?.innerHeight || frame.clientHeight || rect.height;
+      frameMetrics = {
+        left: rect.left,
+        top: rect.top,
+        scaleX: rect.width / contentWidth,
+        scaleY: rect.height / contentHeight,
+      };
+    };
+    const scheduleFrameMeasure = () => {
+      if (!measureFrameId) measureFrameId = window.requestAnimationFrame(measureFrame);
+    };
     const relay = (event: MouseEvent | PointerEvent) => {
       if ("pointerType" in event && event.pointerType !== "mouse") return;
-      const rect = frame.getBoundingClientRect();
       window.dispatchEvent(new CustomEvent("synthesis:scene-pointer", { detail: {
         type: event.type,
-        x: rect.left + event.clientX * rect.width / frame.clientWidth,
-        y: rect.top + event.clientY * rect.height / frame.clientHeight,
+        x: frameMetrics.left + event.clientX * frameMetrics.scaleX,
+        y: frameMetrics.top + event.clientY * frameMetrics.scaleY,
         button: event.button,
       } }));
     };
     const hideCursor = () => window.dispatchEvent(new CustomEvent("synthesis:scene-pointer", { detail: { type: "hide" } }));
     const pointerEvents = ["pointermove", "pointerdown", "pointerup", "pointercancel"] as const;
+    const frameResizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(scheduleFrameMeasure);
+    measureFrame();
+    frameResizeObserver?.observe(frame);
     syncCursor();
     precisePointer.addEventListener("change", syncCursor);
+    window.addEventListener("resize", scheduleFrameMeasure, { passive: true });
+    window.addEventListener("scroll", scheduleFrameMeasure, { passive: true, capture: true });
     pointerEvents.forEach(type => sceneDocument.addEventListener(type, relay, { passive: true, capture: true }));
     sceneDocument.addEventListener("mouseleave", relay);
     sceneDocument.addEventListener("keydown", hideCursor);
     return () => {
       sceneDocument.documentElement.classList.remove("has-synthesis-cursor");
+      window.cancelAnimationFrame(measureFrameId);
+      frameResizeObserver?.disconnect();
       precisePointer.removeEventListener("change", syncCursor);
+      window.removeEventListener("resize", scheduleFrameMeasure);
+      window.removeEventListener("scroll", scheduleFrameMeasure, true);
       pointerEvents.forEach(type => sceneDocument.removeEventListener(type, relay, true));
       sceneDocument.removeEventListener("mouseleave", relay);
       sceneDocument.removeEventListener("keydown", hideCursor);

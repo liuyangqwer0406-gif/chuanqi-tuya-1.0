@@ -31,10 +31,10 @@ try {
   if(width===1440) {
    await page.mouse.move(1100,230);await page.waitForTimeout(650);
    assert.notEqual((await frame.evaluate(()=>window.__fusionState)).cameraX,initial.cameraX);
-   const before=(await frame.evaluate(()=>window.__fusionState)).frames;await page.waitForTimeout(1100);
+   const before=(await frame.evaluate(()=>window.__fusionState)).frames;await page.waitForTimeout(2000);
    const delta=(await frame.evaluate(()=>window.__fusionState)).frames-before;
-   assert.ok(delta>10&&delta<=36,`Unexpected frame count: ${delta}`);
-   report.renderFramesPer1100ms=delta;
+   assert.ok(delta>=116,`Expected at least 58fps, received ${delta / 2}fps`);
+   report.renderFramesPer2000ms=delta;
    await page.mouse.move(25,100);await page.screenshot({path:'output/qa/fusion-desktop.png'});
    const travel=await page.locator('#synthesis-hero').evaluate(el=>el.offsetHeight-innerHeight);
    await page.evaluate(y=>window.scrollTo({top:y,behavior:'instant'}),travel*.45);await page.waitForTimeout(900);
@@ -55,7 +55,7 @@ try {
    await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));await page.waitForTimeout(900);
    assert.ok((await frame.evaluate(()=>window.__fusionState)).release<.001,'Reverse scroll should return particles to the plants');
    report.phases={initial:initial.release,middle:middle.release,gathered:gathered.release,pointerDisplacement};
-   report.checks.push('Particles begin on plant surfaces, release progressively, gather, and return on reverse scroll. Local pointer displacement and the shared camera work; rendering remains within the 30fps cap.');
+   report.checks.push('Particles begin on plant surfaces, release progressively, gather, and return on reverse scroll. Local pointer displacement and the shared camera work at display refresh rate.');
   }
   if(width===390) {
    await page.screenshot({path:'output/qa/fusion-mobile.png'});
