@@ -1,11 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowDownToLine, ArrowUpRight, Copy, Mail } from "lucide-react";
+import { ArrowDownToLine, ArrowUpRight, Check, Copy, Mail } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { assetPath } from "@/lib/assets";
 import { TransitionLink } from "./transition-link";
 import styles from "./film-footer.module.css";
+import { FooterDissolve } from "./footer-dissolve";
 
 const EMAIL = "2742733283@qq.com";
 
@@ -13,6 +14,8 @@ export function FilmFooter({ isHome }: { isHome: boolean }) {
   const footerRef = useRef<HTMLElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [copyStatus, setCopyStatus] = useState("");
+  const copyBusy = useRef(false);
+  const copied = copyStatus === "邮箱已复制";
 
   useEffect(() => {
     const footer = footerRef.current;
@@ -95,28 +98,35 @@ export function FilmFooter({ isHome }: { isHome: boolean }) {
   }, []);
 
   const copyEmail = async () => {
+    if (copyBusy.current) return;
+    copyBusy.current = true;
+    setCopyStatus("正在复制…");
     try {
       await navigator.clipboard.writeText(EMAIL);
       setCopyStatus("邮箱已复制");
     } catch {
       setCopyStatus(EMAIL);
+    } finally {
+      copyBusy.current = false;
     }
   };
 
   return (
     <footer ref={footerRef} className={styles.footer} id="contact" aria-label="温一帆作品集页脚">
+      <FooterDissolve />
       <div className={styles.scene} aria-hidden="true">
         <Image
           ref={imageRef}
           className={styles.landscape}
-          src={assetPath("synthesis/footer/horse-landscape.webp")}
+          src={assetPath("synthesis/footer/material-landscape.webp")}
           alt=""
-          fill
+          width={1536}
+          height={1024}
           sizes="100vw"
           unoptimized
         />
       </div>
-      <div className={styles.content}>
+      <div className={styles.content} data-footer-paper>
         <div className={styles.top}>
           <div>
             <TransitionLink className={styles.wordmark} href="/synthesis" aria-label="温一帆，前往作品集首页">
@@ -147,7 +157,10 @@ export function FilmFooter({ isHome }: { isHome: boolean }) {
             <div className={styles.column} aria-labelledby="film-footer-contact">
               <h2 className={styles.columnTitle} id="film-footer-contact">Get in touch<span>联系</span></h2>
               <a className={styles.email} href={`mailto:${EMAIL}`}>2742733283<br />@qq.com <ArrowUpRight aria-hidden="true" /></a>
-              <button className={styles.copy} type="button" onClick={copyEmail}>Copy email <Copy aria-hidden="true" /></button>
+              <button className={styles.copy} type="button" onClick={copyEmail} data-copied={copied} aria-label="Copy email" aria-busy={copyStatus === "正在复制…"}>
+                <span className={styles.copyLabels} aria-hidden="true"><span>Copy email</span><span>Copied</span></span>
+                <span className={styles.copyIcon} aria-hidden="true">{copied ? <Check /> : <Copy />}</span>
+              </button>
               <p className={styles.copyStatus} role="status" aria-live="polite">{copyStatus}</p>
             </div>
           </div>

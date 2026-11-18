@@ -8,21 +8,60 @@
 
 .footer {
   --footer-gutter: clamp(32px, 3.6vw, 80px);
+  --footer-blend: clamp(160px, 16vw, 230px);
   position: relative;
   z-index: 2;
   isolation: isolate;
   overflow: hidden;
   min-height: max(760px, 100svh);
+  padding-top: var(--footer-blend);
   color: #20201f;
-  background: #dadada;
+  background: #d6d1cc;
   font-family: "Portfolio Footer Fustat", var(--font-body-synthesis), "Microsoft YaHei", sans-serif;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   scroll-margin-top: 88px;
 }
 
+.footer::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 auto;
+  height: calc(var(--footer-blend) + 40px);
+  background: linear-gradient(to bottom,
+    var(--color-black) 0%,
+    color-mix(in srgb, var(--color-black) 92%, transparent) 18%,
+    color-mix(in srgb, var(--color-black) 62%, transparent) 42%,
+    color-mix(in srgb, var(--color-black) 24%, transparent) 70%,
+    transparent 100%);
+  content: "";
+  pointer-events: none;
+}
+
+.dissolve {
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 auto;
+  display: block;
+  width: 100%;
+  height: calc(var(--footer-blend) + 40px);
+  pointer-events: none;
+  opacity: 0;
+}
+.dissolve[data-ready="true"] { opacity: 1; }
+.footer:has(.dissolve[data-ready="true"])::before { opacity: 0; }
+
 .scene { position: absolute; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; }
-.landscape { display: block; object-fit: cover; object-position: 50% 70%; transform: scale(1.018); }
+.landscape {
+  position: absolute;
+  inset: auto 0 0;
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: scale(1.018);
+  transform-origin: center bottom;
+  mask-image: linear-gradient(to bottom, transparent, #000 18%);
+}
 .scene::after {
   position: absolute;
   inset: 0;
@@ -34,7 +73,7 @@
 .content {
   position: relative;
   display: flex;
-  min-height: max(760px, 100svh);
+  min-height: max(760px, 100svh, 50vw);
   flex-direction: column;
   justify-content: space-between;
   padding: clamp(100px, 11vh, 130px) var(--footer-gutter) 30px;
@@ -71,6 +110,16 @@
 .copy:hover::after { transform: scaleX(1); }
 .copy { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; cursor: pointer; text-align: left; white-space: nowrap; }
 .copy svg { flex-shrink: 0; width: 15px; height: 15px; stroke-width: 1.7; }
+/* Label swap and check draw inspired by 21st / motiondotdev / Copy Button. */
+.copyLabels { display: grid; overflow: hidden; }
+.copyLabels > span { grid-area: 1 / 1; transition: opacity 180ms ease, transform 280ms cubic-bezier(.22,1,.36,1); }
+.copyLabels > span:last-child { opacity: 0; transform: translateY(100%); }
+.copy[data-copied="true"] .copyLabels > span:first-child { opacity: 0; transform: translateY(-100%); }
+.copy[data-copied="true"] .copyLabels > span:last-child { opacity: 1; transform: translateY(0); }
+.copyIcon { display: grid; place-items: center; width: 15px; height: 20px; }
+.copy[data-copied="true"] .copyIcon path { stroke-dasharray: 32; animation: copy-check 400ms cubic-bezier(.22,1,.36,1) both; }
+.copy:active { transform: translateY(1px); }
+@keyframes copy-check { from { stroke-dashoffset: 32; } to { stroke-dashoffset: 0; } }
 .copyStatus { min-height: 36px; color: #444442; font-size: 11px; line-height: 1.6; }
 .email { font-variant-numeric: tabular-nums; }
 .email svg { display: inline-block; width: 14px; height: 14px; margin-left: 4px; vertical-align: 1px; stroke-width: 1.8; transition: transform .25s ease; }

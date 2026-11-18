@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { SynthesisShell } from "@/components/synthesis/synthesis-shell";
 import "./synthesis.css";
 import "./motion-refinement.css";
 import "./evolution-motion.css";
@@ -11,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function SynthesisLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <SynthesisShell>{children}</SynthesisShell>;
+  return children;
 }

@@ -16,7 +16,20 @@
 .synthesis-work__steps > span { padding-inline: 24px; color: var(--color-muted-dark); font-size: 9px; letter-spacing: .1em; }
 .synthesis-work__steps button { width: 64px; border: 0; border-left: var(--rule-dark); background: transparent; color: var(--color-paper); font: inherit; font-size: 24px; cursor: pointer; transition: background-color 180ms ease, color 180ms ease; }
 .synthesis-work__steps button:active:not(:focus-visible) { background: var(--color-signal); color: var(--color-black); }
+.synthesis-work__number { display: inline-block; height: 1em; overflow: hidden; vertical-align: -.08em; font-variant-numeric: tabular-nums; }
+.synthesis-work__number i { display: block; font-style: normal; transition: transform 420ms cubic-bezier(.22,1,.36,1); }
+.synthesis-work__number i > span { display: block; height: 1em; line-height: 1; }
+.synthesis-work__arrow { position: relative; display: block; width: 28px; height: 32px; margin: auto; overflow: hidden; }
+.synthesis-work__arrow i { position: absolute; inset: 0; display: grid; place-items: center; font-style: normal; transition: transform 300ms cubic-bezier(.22,1,.36,1); }
+.synthesis-work__arrow i:last-child { transform: translateX(-110%); }
+.synthesis-work__steps button:first-of-type .synthesis-work__arrow i:last-child { transform: translateX(110%); }
+.synthesis-work__steps button:is(:hover, :focus-visible) .synthesis-work__arrow i:first-child { transform: translateX(110%); }
+.synthesis-work__steps button:first-of-type:is(:hover, :focus-visible) .synthesis-work__arrow i:first-child { transform: translateX(-110%); }
+.synthesis-work__steps button:is(:hover, :focus-visible) .synthesis-work__arrow i:last-child { transform: translateX(0); }
+.synthesis-work__steps button:active .synthesis-work__arrow { scale: .88; }
 .synthesis-work__cover-link { position: absolute; inset: 0; z-index: 3; touch-action: pan-y pinch-zoom; }
+.synthesis-work__cover-link[data-dragging="true"]::before,
+.synthesis-work__cover-link[data-dragging="true"]::after { opacity: 1; transform: scale(1); }
 .synthesis-work__cover-link:focus-visible { outline: 3px solid var(--color-signal); outline-offset: -6px; }
 .synthesis-work__cover-link::before,
 .synthesis-work__cover-link::after {
@@ -47,7 +60,7 @@
 .synthesis-work__index button.is-active .synthesis-work__thumbnail img { filter: none; }
 .synthesis-work__index button em { margin-top: 0; }
 .synthesis-header nav a { position: relative; }
-.synthesis-header nav a::after { content: ""; position: absolute; bottom: 0; left: 22%; right: 22%; height: 2px; background: var(--color-signal); transform: scaleX(0); transform-origin: left; transition: transform 240ms var(--ease-out); }
+.synthesis-header nav a::after { content: ""; position: absolute; bottom: 0; inset-inline: 25%; height: 2px; background: var(--header-accent); transform: scaleX(0); transition: transform 240ms var(--ease-out); }
 .synthesis-header nav a[aria-current]::after, .synthesis-header nav a:focus-visible::after { transform: scaleX(1); }
 .synthesis-header nav a:focus-visible::after { transition: none; }
 .synthesis-about__link > span { display: inline-block; transition: transform 240ms var(--ease-out); }
@@ -75,6 +88,7 @@
   .synthesis-work__cover-link:hover::after { opacity: 1; transform: scale(1); }
   .synthesis-work__cover-link:hover ~ .synthesis-work__image-layer.is-current img { transform: scale(1.012); }
   .synthesis-header nav a:hover::after { transform: scaleX(1); }
+  .synthesis-header nav a:hover { color: var(--header-foreground); background: color-mix(in srgb, var(--header-foreground) 5%, transparent); }
 }
 @media (max-width: 800px) {
   .synthesis-work { display: flex; flex-direction: column; }
@@ -91,6 +105,8 @@
   .synthesis-work__stage { order: 3; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .synthesis-work__number i, .synthesis-work__arrow i { transition: none; }
+  .synthesis-work__steps button:active .synthesis-work__arrow { scale: 1; }
   .synthesis-work__steps button,
   .synthesis-work__thumbnail img, .synthesis-header nav a::after, .synthesis-about__link > span,
   .synthesis-work__cover-link::before, .synthesis-work__cover-link::after,
@@ -98,6 +114,7 @@
   [data-home-reveal] [data-reveal-item] { transition: none; transform: none; }
   [data-home-reveal] [data-reveal-item] { opacity: 1; clip-path: none; }
   .synthesis-header nav a::after { opacity: 0; }
+  .synthesis-header { transition: none; }
   .synthesis-header nav a[aria-current]::after, .synthesis-header nav a:focus-visible::after { opacity: 1; }
   .synthesis-section-head::after { transform: scaleX(1); }
 }

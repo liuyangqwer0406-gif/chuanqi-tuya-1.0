@@ -1,34 +1,18 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import {
-  SYNTHESIS_NAVIGATION_START,
-  SYNTHESIS_ROUTE_READY,
-  type SynthesisNavigationDetail,
-  type SynthesisRouteReadyDetail,
-  type SynthesisTransitionCover,
-} from "./route-events";
+import { SYNTHESIS_ROUTE_READY } from "./route-events";
+import { RouteCurtain } from "./route-curtain";
 import { PlantParticleHero } from "./plant-particle-hero";
 import { TransitionLink } from "./transition-link";
 import { InstrumentCursor } from "./instrument-cursor";
 import { FilmFooter } from "./film-footer";
+import { ReadingProgress } from "./reading-progress";
 
 gsap.registerPlugin(useGSAP);
-
-const VgpuSignalField = dynamic(
-  () => import("@/components/vgpu/vgpu-signal-field").then((module) => module.VgpuSignalField),
-  { ssr: false },
-);
-
-type RoutePhase = "idle" | "leaving" | "loading" | "entering";
-
-const ROUTE_ENTER_DURATION = 520;
-const ROUTE_BUFFER_DELAY = 2400;
-const ROUTE_RECOVERY_TIMEOUT = 8000;
 
 const LOADER_PHASES = [
   { id: "01", primary: "INITIALIZING", secondary: "SCENE", cn: "初始化场景", status: "CREATING RENDER CONTEXT" },
@@ -37,39 +21,46 @@ const LOADER_PHASES = [
   { id: "04", primary: "VIEW", secondary: "READY", cn: "视图准备完成", status: "3D SCENE / PORTFOLIO INDEX" },
 ] as const;
 
-const ROUTE_FIELD_SETTINGS = {
-  speed: 0.62,
-  intensity: 0.78,
-  grain: 0.018,
-  pointerStrength: 0.94,
-  density: 0.58,
-} as const;
-
-const ignoreRouteFieldStats = () => undefined;
-const ignoreRouteFieldStatus = () => undefined;
-
 export function SynthesisShell({ children }: { children: React.ReactNode }) {
   const pathname = (usePathname() || "/").replace(/\/+$/, "") || "/";
   const normalizedPath = (pathname || "/").replace(/^\/(legendary-doodle1\.0|chuanqi-tuya-1\.0)/, "");
   const isHome = normalizedPath === "" || normalizedPath === "/" || normalizedPath === "/synthesis" || normalizedPath === "/synthesis/";
   const isAbout = normalizedPath === "/synthesis/about" || normalizedPath === "/synthesis/about/" || normalizedPath === "/about";
   const isLabRoute = normalizedPath.includes("/loader-lab") || normalizedPath.includes("/format-lab");
-  const hasPortfolioFooter = isHome || isAbout || normalizedPath.startsWith("/synthesis/projects/");
+  const isProject = normalizedPath.startsWith("/synthesis/projects/");
+  const hasPortfolioFooter = isHome || isAbout || isProject;
   const [loaded, setLoaded] = useState(isLabRoute);
   const [loaderPhase, setLoaderPhase] = useState(0);
-  const [routePhase, setRoutePhase] = useState<RoutePhase>("idle");
-  const [bufferVisible, setBufferVisible] = useState(false);
-  const [transitionLabel, setTransitionLabel] = useState("NEXT VIEW");
-  const [handoffCover, setHandoffCover] = useState<SynthesisTransitionCover | null>(null);
-  const [routeFieldMounted, setRouteFieldMounted] = useState(false);
-  const [routeFieldActive, setRouteFieldActive] = useState(false);
-  const [routeFieldOrigin, setRouteFieldOrigin] = useState<readonly [number, number]>([0.5, 0.5]);
-  const [routeFieldPulse, setRouteFieldPulse] = useState(0);
   const loaderNode = useRef<HTMLDivElement>(null);
   const loaderIntroTimeline = useRef<gsap.core.Timeline | null>(null);
   const loaderExitTimeline = useRef<gsap.core.Timeline | null>(null);
   const loaderStartedAt = useRef(0);
   const primaryNav = useRef<HTMLElement>(null);
+  const header = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const bar = header.current;
+    const paper = document.querySelector("[data-footer-paper]");
+    if (!bar || !paper) return;
+
+    let observer: IntersectionObserver;
+    const observe = () => {
+      observer?.disconnect();
+      // Check the top edge of the viewport, after the footer's particle seam passes it.
+      observer = new IntersectionObserver(([entry]) => {
+        bar.dataset.surface = entry.isIntersecting ? "paper" : "dark";
+      }, { rootMargin: `0px 0px -${Math.max(0, innerHeight - 1)}px 0px` });
+      observer.observe(paper);
+    };
+    observe();
+    window.addEventListener("resize", observe);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", observe);
+      delete bar.dataset.surface;
+    };
+  }, [pathname]);
+
   useEffect(() => {
     const work = document.getElementById("work");
     const link = primaryNav.current?.querySelector('a[href="#work"]');
@@ -81,32 +72,8 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
     observer.observe(work);
     return () => { observer.disconnect(); link.removeAttribute("aria-current"); };
   }, [isHome, pathname]);
-  const routeTransitionNode = useRef<HTMLDivElement>(null);
-  const handoffNode = useRef<HTMLDivElement>(null);
-  const handoffSource = useRef<SynthesisTransitionCover | null>(null);
-  const handoffAnimation = useRef<gsap.core.Timeline | null>(null);
-  const pathnameRef = useRef(pathname);
-  const previousPathname = useRef(pathname);
-  const phaseRef = useRef<RoutePhase>("idle");
-  const targetPathname = useRef<string | null>(null);
-  const readyPathname = useRef<string | null>(null);
-  const bufferTimer = useRef(0);
-  const recoveryTimer = useRef(0);
-  const enterTimer = useRef(0);
   const visibleLoaderPhase = loaded ? LOADER_PHASES.length - 1 : loaderPhase;
   const loaderStage = LOADER_PHASES[visibleLoaderPhase];
-  const { contextSafe } = useGSAP({ scope: routeTransitionNode });
-
-  const applyRoutePhase = useCallback((next: RoutePhase) => {
-    phaseRef.current = next;
-    setRoutePhase(next);
-    const root = document.documentElement;
-    root.dataset.routeState = next;
-    root.classList.toggle("is-route-leaving", next === "leaving" || next === "loading");
-    root.classList.toggle("is-route-loading", next === "loading");
-    root.classList.toggle("is-route-entering", next === "entering");
-  }, []);
-
   useGSAP(() => {
     const loader = loaderNode.current;
     if (!loader) return;
@@ -244,167 +211,17 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
     };
   }, { scope: loaderNode, dependencies: [loaded], revertOnUpdate: false });
 
-  const finishRouteTransition = useCallback(() => {
-    window.clearTimeout(bufferTimer.current);
-    window.clearTimeout(recoveryTimer.current);
-    window.clearTimeout(enterTimer.current);
-    targetPathname.current = null;
-    applyRoutePhase("entering");
-
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const source = handoffSource.current;
-    const node = handoffNode.current;
-    const target = document.querySelector<HTMLElement>("[data-transition-cover]");
-    const finish = () => {
-      setBufferVisible(false);
-      setHandoffCover(null);
-      setRouteFieldActive(false);
-      handoffSource.current = null;
-      handoffAnimation.current = null;
-      applyRoutePhase("idle");
-    };
-
-    if (!reduced && source && node && target) {
-      const rect = target.getBoundingClientRect();
-      const scaleX = rect.width / source.width;
-      const scaleY = rect.height / source.height;
-      handoffAnimation.current?.kill();
-      const playHandoff = contextSafe(() => {
-        const transition = routeTransitionNode.current;
-        if (!transition) return false;
-        const meta = transition.querySelector<HTMLElement>(".route-transition__meta");
-        const label = transition.querySelector<HTMLElement>(":scope > p");
-        const buffer = transition.querySelector<HTMLElement>(".route-transition__buffer");
-        const field = transition.querySelector<HTMLElement>(".route-transition__field");
-        const signal = transition.querySelector<HTMLElement>(".route-transition__signal");
-        const textNodes = [meta, label, buffer].filter((item): item is HTMLElement => Boolean(item));
-
-        handoffAnimation.current = gsap.timeline({
-          defaults: { ease: "power3.out", overwrite: "auto" },
-          onComplete: () => {
-            textNodes.forEach((element) => gsap.set(element, { clearProps: "all" }));
-            if (field) gsap.set(field, { clearProps: "all" });
-            if (signal) gsap.set(signal, { clearProps: "all" });
-            finish();
-          },
-        });
-        const timeline = handoffAnimation.current
-          .fromTo(node, {
-            opacity: 1,
-            x: source.left,
-            y: source.top,
-            scale: 1.015,
-          }, {
-            opacity: 1,
-            x: rect.left,
-            y: rect.top,
-            scaleX,
-            scaleY,
-            duration: ROUTE_ENTER_DURATION / 1000,
-            ease: "expo.inOut",
-          }, 0)
-          .to(node, { opacity: 0, duration: .08, ease: "power2.out" }, .44);
-        if (textNodes.length) timeline.fromTo(textNodes, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -8, duration: .2 }, .26);
-        if (signal) timeline.fromTo(signal, { scaleX: 0, transformOrigin: "left center" }, { scaleX: 1, duration: .38, ease: "power2.inOut" }, .1);
-        if (field) timeline.to(field, { autoAlpha: 0, scale: 1.018, duration: .35 }, .1);
-        return true;
-      });
-      if (!playHandoff()) enterTimer.current = window.setTimeout(finish, ROUTE_ENTER_DURATION);
-    } else {
-      enterTimer.current = window.setTimeout(finish, reduced ? 140 : ROUTE_ENTER_DURATION);
-    }
-  }, [applyRoutePhase, contextSafe]);
-
   useEffect(() => {
     const fallback = window.setTimeout(() => setLoaded(true), 1800);
     return () => window.clearTimeout(fallback);
   }, []);
 
   useEffect(() => {
-    const onNavigationStart = (event: Event) => {
-      const detail = (event as CustomEvent<SynthesisNavigationDetail>).detail;
-      targetPathname.current = detail.pathname;
-      readyPathname.current = null;
-      setTransitionLabel(detail.label);
-      handoffSource.current = detail.cover ?? null;
-      setHandoffCover(detail.cover ?? null);
-      const useRouteField = !detail.reducedMotion && Boolean(detail.origin);
-      setRouteFieldActive(useRouteField);
-      if (useRouteField) {
-        setRouteFieldMounted(true);
-        setRouteFieldOrigin([detail.origin?.x ?? 0.5, detail.origin?.y ?? 0.5]);
-        setRouteFieldPulse((current) => current + 1);
-      }
-      setBufferVisible(false);
-      applyRoutePhase("leaving");
-      window.clearTimeout(bufferTimer.current);
-      window.clearTimeout(recoveryTimer.current);
-      window.clearTimeout(enterTimer.current);
-      handoffAnimation.current?.kill();
-      handoffAnimation.current = null;
-
-      bufferTimer.current = window.setTimeout(() => {
-        if (phaseRef.current === "leaving" || phaseRef.current === "loading") setBufferVisible(true);
-      }, ROUTE_BUFFER_DELAY);
-      recoveryTimer.current = window.setTimeout(() => {
-        console.warn(`Route transition recovered after readiness timeout: ${detail.href}`);
-        setLoaded(true);
-        finishRouteTransition();
-      }, ROUTE_RECOVERY_TIMEOUT);
-    };
-
-    const onRouteReady = (event: Event) => {
-      const detail = (event as CustomEvent<SynthesisRouteReadyDetail>).detail;
-      readyPathname.current = detail.pathname;
-      if (detail.pathname !== pathnameRef.current) return;
-      setLoaded(true);
-      if (phaseRef.current === "loading") finishRouteTransition();
-    };
-
-    window.addEventListener(SYNTHESIS_NAVIGATION_START, onNavigationStart);
-    window.addEventListener(SYNTHESIS_ROUTE_READY, onRouteReady);
-    const primedPathname = document.documentElement.dataset.routeReadyPath;
-    if (primedPathname === pathnameRef.current) {
-      readyPathname.current = primedPathname;
-      setLoaded(true);
-    }
-    return () => {
-      window.removeEventListener(SYNTHESIS_NAVIGATION_START, onNavigationStart);
-      window.removeEventListener(SYNTHESIS_ROUTE_READY, onRouteReady);
-      window.clearTimeout(bufferTimer.current);
-      window.clearTimeout(recoveryTimer.current);
-      window.clearTimeout(enterTimer.current);
-      handoffAnimation.current?.kill();
-      handoffAnimation.current = null;
-      const root = document.documentElement;
-      delete root.dataset.routeState;
-      root.classList.remove("is-route-leaving", "is-route-loading", "is-route-entering");
-    };
-  }, [applyRoutePhase, finishRouteTransition]);
-
-  useEffect(() => {
-    pathnameRef.current = pathname;
-    if (previousPathname.current === pathname) return;
-    previousPathname.current = pathname;
-    if (document.documentElement.dataset.routeReadyPath === pathname) readyPathname.current = pathname;
-
-    if (!targetPathname.current) {
-      setBufferVisible(false);
-      applyRoutePhase("idle");
-      return;
-    }
-
-    applyRoutePhase("loading");
-    window.clearTimeout(bufferTimer.current);
-    bufferTimer.current = window.setTimeout(() => {
-      if (phaseRef.current === "loading") setBufferVisible(true);
-    }, 180);
-
-    if (readyPathname.current === pathname) {
-      const frame = window.requestAnimationFrame(finishRouteTransition);
-      return () => window.cancelAnimationFrame(frame);
-    }
-  }, [pathname, applyRoutePhase, finishRouteTransition]);
+    const ready = () => setLoaded(true);
+    if (document.documentElement.dataset.routeReadyPath === pathname) ready();
+    window.addEventListener(SYNTHESIS_ROUTE_READY, ready);
+    return () => window.removeEventListener(SYNTHESIS_ROUTE_READY, ready);
+  }, [pathname]);
 
   useEffect(() => {
     const nav = primaryNav.current;
@@ -507,7 +324,7 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div id="top" className={`synthesis-site${loaded ? " is-loaded" : " is-loading"}`} aria-busy={!loaded || routePhase === "loading"}>
+    <div id="top" className={`synthesis-site${loaded ? " is-loaded" : " is-loading"}`} aria-busy={!loaded}>
       <InstrumentCursor />
       <a className="synthesis-skip" href="#content">Skip to content</a>
       {!isLabRoute && (
@@ -541,71 +358,21 @@ export function SynthesisShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
-      <div
-        ref={routeTransitionNode}
-        className="route-transition"
-        data-phase={routePhase}
-        data-buffer-visible={bufferVisible || undefined}
-        data-signal-field={routeFieldActive || undefined}
-        aria-hidden={routePhase === "idle"}
-      >
-        {routeFieldMounted && (
-          <div className="route-transition__field" aria-hidden="true">
-            <VgpuSignalField
-              paused={routePhase === "idle" || !routeFieldActive}
-              settings={ROUTE_FIELD_SETTINGS}
-              pointer={routeFieldOrigin}
-              pulseKey={routeFieldPulse}
-              pulseDuration={2.2}
-              interactive={false}
-              onStats={ignoreRouteFieldStats}
-              onStatus={ignoreRouteFieldStatus}
-            />
-          </div>
-        )}
-        {handoffCover && (
-          <div
-            ref={handoffNode}
-            className="route-transition__cover"
-            style={{
-              width: handoffCover.width,
-              height: handoffCover.height,
-              backgroundImage: `url("${handoffCover.src}")`,
-              backgroundPosition: handoffCover.objectPosition,
-              backgroundSize: handoffCover.objectFit === "contain" ? "contain" : "cover",
-              backgroundColor: handoffCover.backgroundColor,
-              transform: `translate3d(${handoffCover.left}px, ${handoffCover.top}px, 0)`,
-            }}
-            aria-hidden="true"
-          >
-            <span className="route-transition__corners"><i /><i /><i /><i /></span>
-          </div>
-        )}
-        <div className="route-transition__meta">
-          <span>WEN YIFAN / 026</span>
-          <span>{routePhase === "loading" ? "ASSEMBLING VIEW" : routePhase === "entering" ? "VIEW READY" : "OPENING"}</span>
-        </div>
-        <p>{transitionLabel}</p>
-        <div className="route-transition__buffer" role="status" aria-live="polite">
-          <span>{bufferVisible ? "PREPARING THE NEXT VIEW" : ""}</span>
-          <i aria-hidden="true" />
-        </div>
-        <b className="route-transition__signal" aria-hidden="true" />
-      </div>
+      <RouteCurtain />
       <div className={`synthesis-persistent-scene${isHome ? " is-active" : ""}`} aria-hidden="true">
         {isHome ? <PlantParticleHero /> : null}
       </div>
       {!isLabRoute && (
-        <header className="synthesis-header">
-          <TransitionLink className="synthesis-brand" href="/synthesis" aria-label="Wen Yifan synthesis portfolio home"><span>WEN</span> YIFAN<sup>026</sup></TransitionLink>
+        <header ref={header} className="synthesis-header">
+          <TransitionLink className="synthesis-brand" href="/synthesis" aria-label="Wen Yifan synthesis portfolio home"><b><span>WEN</span> YIFAN</b><small aria-hidden="true">026</small></TransitionLink>
           <nav ref={primaryNav} aria-label="Primary navigation">
-            <TransitionLink data-proximity-item href={isHome ? "#work" : "/synthesis#work"}><span data-proximity-label>WORK</span></TransitionLink>
+            <TransitionLink data-proximity-item href={isHome ? "#work" : "/synthesis#work"} aria-current={isProject ? "true" : undefined}><span data-proximity-label>WORK</span></TransitionLink>
             <TransitionLink data-proximity-item href="/synthesis/about" aria-current={isAbout ? "page" : undefined}><span data-proximity-label>ABOUT</span></TransitionLink>
             <a data-proximity-item href="mailto:2742733283@qq.com"><span data-proximity-label>CONTACT</span></a>
           </nav>
         </header>
       )}
-      <div className="synthesis-progress" aria-hidden="true"><i /></div>
+      {hasPortfolioFooter && <ReadingProgress />}
       {children}
       {hasPortfolioFooter && <FilmFooter isHome={isHome} />}
     </div>

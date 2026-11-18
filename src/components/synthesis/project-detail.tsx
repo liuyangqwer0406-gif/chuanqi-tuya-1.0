@@ -9,6 +9,11 @@ import { LiquidLink } from "./liquid-link";
 import { announceSynthesisRouteReady } from "./route-events";
 import { TransitionLink } from "./transition-link";
 import { CaseChapterNav } from "./case-chapter-nav";
+import { GalleryThumbnailStrip } from "./gallery-thumbnail-strip";
+import { CaseImageViewport } from "./case-image-viewport";
+import { CaseEditorialGallery } from "./case-editorial-gallery";
+import { animateImageFlight, containedImageBounds } from "./case-image-flight";
+import interactionStyles from "./interaction-controls.module.css";
 
 function RevealedCaseTitle({ text }: { text: string }) {
   const root = useRef<HTMLHeadingElement>(null);
@@ -76,7 +81,7 @@ function ProjectFigure({ item, lead = false, onOpen }: { item: ProjectImage; lea
   const leadClass = lead ? " is-lead" : "";
   return (
     <figure className={`case-figure${shapeClass}${leadClass}`} data-case-reveal>
-      <button type="button" onClick={(event) => onOpen(item, event.currentTarget)} aria-label={`Enlarge image: ${item.caption}`} data-case-reveal-item data-case-reveal-media>
+      <button type="button" onClick={(event) => onOpen(item, event.currentTarget)} aria-label={`Enlarge image: ${item.caption}`} data-image-src={item.src} data-case-reveal-item data-case-reveal-media>
         <span className="case-figure__media">
           <Image src={item.src} alt={item.alt} fill sizes="(max-width: 800px) 100vw, 50vw" />
         </span>
@@ -226,6 +231,7 @@ function MotionSection({ section }: { section: ProjectMotionSection }) {
 }
 
 export function ProjectDetail({ project }: { project: SynthesisProject }) {
+  const isEditorial = project.slug === "packaging-design";
   const [lightbox, setLightbox] = useState<ProjectImage | null>(null);
   const [lightboxClosing, setLightboxClosing] = useState(false);
   const [lightboxOpening, setLightboxOpening] = useState(false);
@@ -235,7 +241,8 @@ export function ProjectDetail({ project }: { project: SynthesisProject }) {
   const lightboxOpenFrame = useRef(0);
   const lightboxDialog = useRef<HTMLDivElement>(null);
   const caseRoot = useRef<HTMLElement>(null);
-  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const flightOrigin = useRef<DOMRect | null>(null);
+  const flightCleanup = useRef<(() => void) | null>(null);
   const gallery = useMemo(() => project.chapters.flatMap(chapter => chapter.images), [project]);
   const chapterLinks = useMemo(() => project.chapters.flatMap((chapter, index) => {
     const item = { id: `${project.slug}-section-${index}`, title: chapter.title };
@@ -250,6 +257,8 @@ export function ProjectDetail({ project }: { project: SynthesisProject }) {
   const projectTotal = String(synthesisProjects.length).padStart(2, "0");
   const hasLightbox = Boolean(lightbox);
   const stepLightbox = useCallback((direction: number) => {
+    flightCleanup.current?.();
+    flightOrigin.current = null;
     setLightbox(current => {
       if (!current || !gallery.length) return current;
       const index = gallery.findIndex(item => item.src === current.src);
@@ -265,6 +274,8 @@ export function ProjectDetail({ project }: { project: SynthesisProject }) {
   const closeLightbox = useCallback((immediate = false) => {
     if (!lightbox || lightboxClosing) return;
     if (lightboxCloseTimer.current !== null) window.clearTimeout(lightboxCloseTimer.current);
+    flightCleanup.current?.();
+    flightOrigin.current = null;
 
     if (immediate || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setLightboxOpening(false);
@@ -273,13 +284,24 @@ export function ProjectDetail({ project }: { project: SynthesisProject }) {
       return;
     }
 
+    let closeDuration = 220;
+    const currentImage = lightboxDialog.current?.querySelector<HTMLImageElement>(".case-lightbox__media img");
+    const target = Array.from(caseRoot.current?.querySelectorAll<HTMLButtonElement>("[data-image-src]") ?? [])
+      .find(button => button.dataset.imageSrc === lightbox.src)?.querySelector("img");
+    if (isEditorial && currentImage && target?.complete && target.naturalWidth && !currentImage.closest('[data-zoomed="true"]')) {
+      const destination = containedImageBounds(target);
+      if (destination.top >= 200 && destination.bottom <= innerHeight) {
+        flightCleanup.current = animateImageFlight(currentImage, containedImageBounds(currentImage), destination);
+        closeDuration = 440;
+      }
+    }
     setLightboxClosing(true);
     lightboxCloseTimer.current = window.setTimeout(() => {
       setLightbox(null);
       setLightboxClosing(false);
       lightboxCloseTimer.current = null;
-    }, 220);
-  }, [lightbox, lightboxClosing]);
+    }, closeDuration);
+  }, [isEditorial, lightbox, lightboxClosing]);
 
   const closeLightboxRef = useRef(closeLightbox);
   useEffect(() => {
@@ -287,16 +309,21 @@ export function ProjectDetail({ project }: { project: SynthesisProject }) {
   }, [closeLightbox]);
 
   useEffect(() => {
+    if (lightbox && document.activeElement === document.body) lightboxClose.current?.focus({ preventScroll: true });
+  }, [lightbox]);
+
+  useEffect(() => {
     if (!hasLightbox) return;
 
     const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
       if (event.key === "Escape") closeLightboxRef.current(true);
       if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
         event.preventDefault();
         stepLightbox(event.key === "ArrowRight" ? 1 : -1);
       }
       if (event.key === "Tab") {
-        const controls = Array.from(lightboxDialog.current?.querySelectorAll<HTMLElement>("button:not(:disabled), a[href]") ?? []);
+        const controls = Array.from(lightboxDialog.current?.querySelectorAll<HTMLElement>('button:not(:disabled):not([tabindex="-1"]), a[href]') ?? []);
         const first = controls[0];
         const last = controls.at(-1);
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
@@ -304,18 +331,24 @@ export function ProjectDetail({ project }: { project: SynthesisProject }) {
       }
     };
     document.body.classList.add("has-lightbox");
+    const site = document.querySelector<HTMLElement>(".synthesis-site");
+    const wasInert = site?.inert ?? false;
+    if (site) site.inert = true;
     window.addEventListener("keydown", onKey);
     const focusFrame = requestAnimationFrame(() => lightboxClose.current?.focus());
     return () => {
       cancelAnimationFrame(focusFrame);
       cancelAnimationFrame(lightboxOpenFrame.current);
       document.body.classList.remove("has-lightbox");
+      if (site) site.inert = wasInert;
       window.removeEventListener("keydown", onKey);
-      lightboxTrigger.current?.focus();
+      flightCleanup.current?.();
+      lightboxTrigger.current?.focus({ preventScroll: true });
     };
   }, [hasLightbox, stepLightbox]);
 
   useEffect(() => () => {
+    flightCleanup.current?.();
     if (lightboxCloseTimer.current !== null) window.clearTimeout(lightboxCloseTimer.current);
     window.cancelAnimationFrame(lightboxOpenFrame.current);
   }, []);
@@ -361,14 +394,35 @@ export function ProjectDetail({ project }: { project: SynthesisProject }) {
   const openLightbox = (item: ProjectImage, trigger: HTMLButtonElement) => {
     if (lightboxCloseTimer.current !== null) window.clearTimeout(lightboxCloseTimer.current);
     lightboxTrigger.current = trigger;
+    const source = trigger.querySelector("img");
+    flightOrigin.current = isEditorial && source?.complete && source.naturalWidth ? containedImageBounds(source) : null;
     setLightboxClosing(false);
     setLightboxOpening(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     setLightbox(item);
     lightboxOpenFrame.current = window.requestAnimationFrame(() => setLightboxOpening(false));
   };
 
+  const chapters = project.chapters.map((chapter, chapterIndex) => (
+    <Fragment key={chapter.title}>
+      <section id={`${project.slug}-section-${chapterIndex}`} className="case-chapter" aria-labelledby={`${project.slug}-chapter-${chapterIndex}`}>
+        <header data-case-reveal>
+          <div data-case-reveal-item>
+            <p className="case-chapter__index">CHAPTER {String(chapterIndex + 1).padStart(2, "0")} / {String(project.chapters.length).padStart(2, "0")} · {String(chapter.images.length).padStart(2, "0")} IMAGES</p>
+            <h2 id={`${project.slug}-chapter-${chapterIndex}`}>{chapter.title}</h2>
+            <h3>{chapter.titleCn}</h3>
+          </div>
+          <p data-case-reveal-item>{chapter.body}</p>
+        </header>
+        <div className="case-gallery">
+          {chapter.images.map((item, imageIndex) => <ProjectFigure item={item} lead={imageIndex === 0 && !item.shape} onOpen={openLightbox} key={item.src} />)}
+        </div>
+      </section>
+      {chapterIndex === 0 && project.motion && <MotionSection section={project.motion} />}
+    </Fragment>
+  ));
+
   return (
-    <main ref={caseRoot} id="content" className="case-page">
+    <main ref={caseRoot} id="content" className={`case-page${isEditorial ? " case-page--editorial" : ""}`}>
       <section className="case-hero" aria-labelledby="case-title">
         <div className="case-hero__heading">
           <div className="case-hero__meta">
@@ -408,24 +462,7 @@ export function ProjectDetail({ project }: { project: SynthesisProject }) {
 
       <CaseChapterNav chapters={chapterLinks} />
 
-      {project.chapters.map((chapter, chapterIndex) => (
-        <Fragment key={chapter.title}>
-          <section id={`${project.slug}-section-${chapterIndex}`} className="case-chapter" aria-labelledby={`${project.slug}-chapter-${chapterIndex}`}>
-            <header data-case-reveal>
-              <div data-case-reveal-item>
-                <p className="case-chapter__index">CHAPTER {String(chapterIndex + 1).padStart(2, "0")} / {String(project.chapters.length).padStart(2, "0")} · {String(chapter.images.length).padStart(2, "0")} IMAGES</p>
-                <h2 id={`${project.slug}-chapter-${chapterIndex}`}>{chapter.title}</h2>
-                <h3>{chapter.titleCn}</h3>
-              </div>
-              <p data-case-reveal-item>{chapter.body}</p>
-            </header>
-            <div className="case-gallery">
-              {chapter.images.map((item, imageIndex) => <ProjectFigure item={item} lead={imageIndex === 0 && !item.shape} onOpen={openLightbox} key={item.src} />)}
-            </div>
-          </section>
-          {chapterIndex === 0 && project.motion && <MotionSection section={project.motion} />}
-        </Fragment>
-      ))}
+      {isEditorial ? <CaseEditorialGallery count={gallery.length}>{chapters}</CaseEditorialGallery> : chapters}
 
       <section className="case-closing" aria-labelledby="case-closing-title" data-case-reveal>
         <div data-case-reveal-item>
@@ -452,7 +489,7 @@ export function ProjectDetail({ project }: { project: SynthesisProject }) {
       </nav>
 
       {lightbox && createPortal(
-        <div ref={lightboxDialog} className={`case-lightbox${lightboxOpening ? " is-opening" : ""}${lightboxClosing ? " is-closing" : ""}`} role="dialog" aria-modal="true" aria-label={`Image preview: ${lightbox.caption}`} onClick={() => closeLightbox()}>
+        <div ref={lightboxDialog} className={`case-lightbox ${interactionStyles.viewer}${isEditorial ? " case-lightbox--editorial" : ""}${lightboxOpening ? " is-opening" : ""}${lightboxClosing ? " is-closing" : ""}`} role="dialog" aria-modal="true" aria-label={`Image preview: ${lightbox.caption}`} onClick={() => closeLightbox()}>
           <header className="case-lightbox__toolbar" onClick={event => event.stopPropagation()}>
             <span aria-live="polite">{String(lightboxIndex + 1).padStart(2, "0")} / {String(gallery.length).padStart(2, "0")}</span>
             <nav aria-label="Image navigation">
@@ -462,19 +499,20 @@ export function ProjectDetail({ project }: { project: SynthesisProject }) {
               <button ref={lightboxClose} type="button" onClick={() => closeLightbox()} aria-label="Close image preview">CLOSE ×</button>
             </nav>
           </header>
-          <div className="case-lightbox__media" onClick={event => event.stopPropagation()}
-            onPointerDown={event => { if (event.pointerType === "touch") swipeStart.current = { x: event.clientX, y: event.clientY }; }}
-            onPointerCancel={() => { swipeStart.current = null; }}
-            onPointerUp={event => {
-              const start = swipeStart.current;
-              swipeStart.current = null;
-              if (!start) return;
-              const delta = event.clientX - start.x;
-              if (Math.abs(delta) > 50 && Math.abs(delta) > Math.abs(event.clientY - start.y) * 1.5) stepLightbox(delta < 0 ? 1 : -1);
-            }}>
-            <Image key={lightbox.src} src={lightbox.src} alt={lightbox.alt} fill sizes="96vw" />
-          </div>
+          <CaseImageViewport key={lightbox.src} image={lightbox} onStep={stepLightbox} onImageReady={image => {
+            const origin = flightOrigin.current;
+            flightOrigin.current = null;
+            if (origin && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+              flightCleanup.current?.();
+              flightCleanup.current = animateImageFlight(image, origin, containedImageBounds(image));
+            }
+          }} />
           <p aria-live="polite">{lightbox.caption} / {lightbox.note}</p>
+          <GalleryThumbnailStrip images={gallery} active={lightboxIndex} onSelect={image => {
+            flightCleanup.current?.();
+            flightOrigin.current = null;
+            setLightbox(image);
+          }} />
         </div>,
         document.body,
       )}

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { SynthesisShell } from "@/components/synthesis/synthesis-shell";
 import { SynthesisHome } from "@/components/synthesis/synthesis-home";
 import "./synthesis/synthesis.css";
 import "./synthesis/motion-refinement.css";
 import "./synthesis/evolution-motion.css";
+import "./synthesis/case-refinement.css";
 
 export const metadata: Metadata = {
   title: "Wen Yifan - Visual Design Portfolio",
@@ -12,8 +12,6 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <SynthesisShell>
-      <SynthesisHome />
-    </SynthesisShell>
+    <SynthesisHome />
   );
 }

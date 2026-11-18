@@ -1,0 +1,18 @@
+.control { position: fixed; z-index: 80; right: 20px; bottom: 24px; display: flex; align-items: center; gap: 12px; padding: 0; border: 0; background: transparent; color: var(--color-paper); cursor: pointer; opacity: 0; visibility: hidden; transform: translateY(12px); transition: opacity 220ms ease, transform 300ms var(--ease-out), visibility 220ms; }
+.control[data-visible="true"] { opacity: 1; visibility: visible; transform: translateY(0); }
+.dial { position: relative; display: grid; place-items: center; width: 58px; height: 58px; border: 1px solid #ffffff20; border-radius: 50%; background: #11100fe8; backdrop-filter: blur(10px); overflow: hidden; box-shadow: 0 2px 18px #0003; }
+.ring { position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(var(--color-signal) var(--read-progress, 0%), #ffffff18 0); mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px)); }
+.percentage { display: flex; align-items: baseline; gap: 1px; font-size: 13px; font-variant-numeric: tabular-nums; transition: opacity 180ms ease, transform 240ms var(--ease-out); }
+.percentage small { font-size: 8px; color: var(--color-muted-dark); }
+.arrow { position: absolute; font-size: 24px; opacity: 0; transform: translateY(16px); transition: opacity 180ms ease, transform 240ms var(--ease-out); }
+.hint { padding: 8px 12px; border: 1px solid #ffffff20; background: #11100fe8; font-size: 12px; white-space: nowrap; opacity: 0; transform: translateX(8px); transition: opacity 180ms ease, transform 240ms var(--ease-out); }
+.control:is(:hover, :focus-visible) .hint, .control:is(:hover, :focus-visible) .arrow { opacity: 1; transform: translate(0); }
+.control:is(:hover, :focus-visible) .percentage { opacity: 0; transform: translateY(-16px); }
+.control[data-visible]:focus-visible { outline: none; }
+.control:focus-visible .dial { outline: 2px solid var(--color-signal); outline-offset: 3px; }
+.control:active .dial { transform: scale(.94); }
+:global(body.has-lightbox) .control,
+:global(html.is-route-leaving) .control,
+:global(html.is-route-entering) .control,
+:global(.synthesis-site.is-loading) .control { opacity: 0; visibility: hidden; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .control, .control * { transition: none; } .control:active .dial { transform: none; } }

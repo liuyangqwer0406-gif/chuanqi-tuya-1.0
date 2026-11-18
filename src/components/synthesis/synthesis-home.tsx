@@ -213,11 +213,14 @@ export function SynthesisHome() {
         </header>
 
         <div className="synthesis-work__transport">
-          <p aria-live="polite" aria-atomic="true"><span>{String(active + 1).padStart(2, "0")}</span> / 07 <b>{project.title}</b></p>
+          <p aria-live="polite" aria-atomic="true">
+            <span className="synthesis-work__number" aria-hidden="true"><i style={{ transform: `translateY(-${active}em)` }}>{synthesisProjects.map((item, index) => <span key={item.slug}>{String(index + 1).padStart(2, "0")}</span>)}</i></span>
+            <span className="sr-only">{String(active + 1).padStart(2, "0")}</span> / 07 <b>{project.title}</b>
+          </p>
           <div className="synthesis-work__steps" aria-label="Browse selected work">
-            <span>EXPLORE THE INDEX</span>
-            <button type="button" aria-label="Previous project" onClick={() => { window.clearTimeout(hoverTimer.current); selectProject((activeRef.current + synthesisProjects.length - 1) % synthesisProjects.length); }}>←</button>
-            <button type="button" aria-label="Next project" onClick={() => { window.clearTimeout(hoverTimer.current); selectProject((activeRef.current + 1) % synthesisProjects.length); }}>→</button>
+            <span id="work-browse-help">DRAG / ← →</span>
+            <button type="button" aria-label="Previous project" onClick={() => { window.clearTimeout(hoverTimer.current); selectProject((activeRef.current + synthesisProjects.length - 1) % synthesisProjects.length); }}><span className="synthesis-work__arrow" aria-hidden="true"><i>←</i><i>←</i></span></button>
+            <button type="button" aria-label="Next project" onClick={() => { window.clearTimeout(hoverTimer.current); selectProject((activeRef.current + 1) % synthesisProjects.length); }}><span className="synthesis-work__arrow" aria-hidden="true"><i>→</i><i>→</i></span></button>
           </div>
         </div>
 
@@ -227,16 +230,33 @@ export function SynthesisHome() {
               className="synthesis-work__cover-link"
               href={`/synthesis/projects/${project.slug}`}
               aria-label={`Open case study: ${project.title}`}
+              aria-describedby="work-browse-help"
+              aria-keyshortcuts="ArrowLeft ArrowRight Home End"
               data-transition-label={project.title}
+              onDragStart={event => event.preventDefault()}
+              onKeyDown={event => {
+                const last = synthesisProjects.length - 1;
+                const index = event.key === "ArrowRight" ? (activeRef.current + 1) % synthesisProjects.length
+                  : event.key === "ArrowLeft" ? (activeRef.current + last) % synthesisProjects.length
+                  : event.key === "Home" ? 0 : event.key === "End" ? last : null;
+                if (index === null) return;
+                event.preventDefault();
+                selectProject(index);
+              }}
               onPointerDown={(event) => {
+                if (event.button !== 0) return;
                 suppressCoverClick.current = false;
-                if (event.pointerType === "mouse") return;
                 swipe.current = { x: event.clientX, y: event.clientY };
                 event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onPointerMove={event => {
+                const start = swipe.current;
+                if (start && Math.abs(event.clientX - start.x) > 12) event.currentTarget.dataset.dragging = "true";
               }}
               onPointerUp={(event) => {
                 const start = swipe.current;
                 swipe.current = null;
+                delete event.currentTarget.dataset.dragging;
                 if (!start) return;
                 const dx = event.clientX - start.x;
                 const dy = event.clientY - start.y;
@@ -245,7 +265,7 @@ export function SynthesisHome() {
                   selectProject((activeRef.current + (dx < 0 ? 1 : synthesisProjects.length - 1)) % synthesisProjects.length);
                 }
               }}
-              onPointerCancel={() => { swipe.current = null; suppressCoverClick.current = true; }}
+              onPointerCancel={event => { swipe.current = null; suppressCoverClick.current = true; delete event.currentTarget.dataset.dragging; }}
               onClick={(event) => { if (event.detail > 0 && suppressCoverClick.current) { event.preventDefault(); suppressCoverClick.current = false; } }}
             />
             {outgoingProject && (

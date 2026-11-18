@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { PortfolioFrame } from "@/components/synthesis/portfolio-frame";
 import { SmoothMotionProvider } from "@/components/motion/smooth-motion-provider";
 
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
       <body>
-        <SmoothMotionProvider>{children}</SmoothMotionProvider>
+        <SmoothMotionProvider><PortfolioFrame>{children}</PortfolioFrame></SmoothMotionProvider>
       </body>
     </html>
   );

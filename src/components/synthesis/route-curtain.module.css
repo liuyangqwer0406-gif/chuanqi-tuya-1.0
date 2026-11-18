@@ -1,0 +1,11 @@
+.curtain { position: fixed; z-index: 150; inset: 72px 0 0; visibility: hidden; opacity: 0; overflow: hidden; pointer-events: none; }
+.curtain:not([data-phase="idle"]) { pointer-events: auto; }
+.columns { position: absolute; inset: 0; display: flex; }
+.strip { flex: 1; height: 100%; margin-right: -1px; background: #171614; border-top: 2px solid var(--color-signal); border-right: 1px solid #ffffff0d; transform: translateY(100%); }
+.copy { position: absolute; inset: 0; padding: clamp(24px, 5vw, 80px); display: flex; flex-direction: column; justify-content: center; gap: 24px; color: var(--color-paper); pointer-events: none; }
+.copy > span { font-size: 11px; letter-spacing: .12em; color: var(--color-paper-dim); }
+.copy > span:first-child { color: var(--color-signal); }
+.copy .label { max-width: 1000px; font-size: clamp(32px, 5vw, 76px); line-height: 1.08; font-weight: 300; letter-spacing: -.04em; text-wrap: balance; }
+.copy [role="status"] { min-height: 1.5em; }
+:global(html[data-route-reduced="true"]) .curtain { visibility: hidden !important; }
+@media (max-width: 800px) { .curtain { top: 64px; } }
