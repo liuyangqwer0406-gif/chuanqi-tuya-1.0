@@ -432,16 +432,18 @@ export function ProjectDetail({ project }: { project: SynthesisProject }) {
           <RevealedCaseTitle text={project.title} />
           {project.titleCn && <h2>{project.titleCn}</h2>}
         </div>
-        <figure className={`case-hero__media${project.cover.shape === "board" ? " case-hero__media--board" : ""}`} data-transition-cover>
-          <Image
-            src={project.cover.src}
-            alt={project.cover.alt}
-            fill
-            priority
-            sizes="100vw"
-            onLoad={() => markRouteReady(false)}
-            onError={() => markRouteReady(true)}
-          />
+        <figure className={`case-hero__media${project.cover.shape ? ` case-hero__media--${project.cover.shape}` : ""}`} data-transition-cover>
+          <div className="case-hero__image">
+            <Image
+              src={project.cover.src}
+              alt={project.cover.alt}
+              fill
+              priority
+              sizes="100vw"
+              onLoad={() => markRouteReady(false)}
+              onError={() => markRouteReady(true)}
+            />
+          </div>
           <figcaption><span>{project.cover.caption}</span><span>{project.cover.note}</span></figcaption>
         </figure>
       </section>
@@ -451,6 +453,15 @@ export function ProjectDetail({ project }: { project: SynthesisProject }) {
           <p className="case-intro__eyebrow">PROJECT OVERVIEW / 项目概览</p>
           <p className="case-intro__statement">{project.intro}</p>
           <p className="case-intro__statement-cn">{project.introCn}</p>
+          {project.links && (
+            <div className="case-intro__sources">
+              {project.links.map(({ href, label }) => (
+                <a key={href} className="case-intro__source" href={href} target="_blank" rel="noreferrer">
+                  {label} <span aria-hidden="true">↗</span>
+                </a>
+              ))}
+            </div>
+          )}
         </div>
         <dl data-case-reveal-item>
           <div><dt>ROLE</dt><dd>{project.role}</dd></div>

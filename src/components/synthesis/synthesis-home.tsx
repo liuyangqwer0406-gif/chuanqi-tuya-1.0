@@ -33,6 +33,7 @@ export function SynthesisHome() {
   const suppressCoverClick = useRef(false);
   const switchTimeline = useRef<gsap.core.Timeline | null>(null);
   const project = synthesisProjects[active];
+  const projectTotal = String(synthesisProjects.length).padStart(2, "0");
   const outgoingProject = outgoing === null ? null : synthesisProjects[outgoing];
 
   useGSAP(() => {
@@ -206,7 +207,7 @@ export function SynthesisHome() {
       <section className="synthesis-work" id="work" aria-labelledby="synthesis-work-title">
         <header className="synthesis-section-head" data-home-reveal>
           <div className="synthesis-section-title" data-reveal-item>
-            <span>ARCHIVE / 01 — 07 PROJECTS</span>
+            <span>ARCHIVE / 01 — {projectTotal} PROJECTS</span>
             <h2 id="synthesis-work-title">SELECTED WORK</h2>
           </div>
           <p data-reveal-item>精选 7 个设计项目，涵盖品牌、包装、三维与网页。从一套清楚的规则做起，在真实物料和屏幕上检验它好不好用。</p>
@@ -215,7 +216,7 @@ export function SynthesisHome() {
         <div className="synthesis-work__transport">
           <p aria-live="polite" aria-atomic="true">
             <span className="synthesis-work__number" aria-hidden="true"><i style={{ transform: `translateY(-${active}em)` }}>{synthesisProjects.map((item, index) => <span key={item.slug}>{String(index + 1).padStart(2, "0")}</span>)}</i></span>
-            <span className="sr-only">{String(active + 1).padStart(2, "0")}</span> / 07 <b>{project.title}</b>
+            <span className="sr-only">{String(active + 1).padStart(2, "0")}</span> / {projectTotal} <b>{project.title}</b>
           </p>
           <div className="synthesis-work__steps" aria-label="Browse selected work">
             <span id="work-browse-help">DRAG / ← →</span>
@@ -269,11 +270,11 @@ export function SynthesisHome() {
               onClick={(event) => { if (event.detail > 0 && suppressCoverClick.current) { event.preventDefault(); suppressCoverClick.current = false; } }}
             />
             {outgoingProject && (
-              <div className={`synthesis-work__image-layer is-outgoing${outgoingProject.cover.shape === "board" ? " is-board" : ""}`} key={outgoingProject.slug} aria-hidden="true">
+              <div className={`synthesis-work__image-layer is-outgoing${outgoingProject.cover.shape ? ` is-${outgoingProject.cover.shape}` : ""}`} key={outgoingProject.slug} aria-hidden="true">
                 <Image src={outgoingProject.cover.src} alt="" fill sizes="(max-width: 800px) 100vw, 68vw" />
               </div>
             )}
-            <div className={`synthesis-work__image-layer is-current${project.cover.shape === "board" ? " is-board" : ""}`} key={project.slug} data-transition-cover>
+            <div className={`synthesis-work__image-layer is-current${project.cover.shape ? ` is-${project.cover.shape}` : ""}`} key={project.slug} data-transition-cover>
               <Image
                 src={project.cover.src}
                 alt={project.cover.alt}

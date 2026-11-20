@@ -41,6 +41,7 @@ export type SynthesisProject = {
   intro: string;
   introCn: string;
   cover: ProjectImage;
+  links?: { href: string; label: string }[];
   motion?: ProjectMotionSection;
   chapters: ProjectChapter[];
   closing: string;
@@ -351,6 +352,83 @@ export const synthesisProjects: SynthesisProject[] = [
     ],
     closing: "Concept study exploring glass physics and packaging. Physical moulds and drop tests remain for future development.",
     closingCn: "视觉和材质已推演成型；后续如果有机会，会做实物开模和抗摔打样测试。",
+  },
+  {
+    slug: "stoa",
+    title: "STOA",
+    titleCn: "股市 Agent 界面设计",
+    discipline: "Agent Interface / Information Design",
+    year: "2026",
+    role: "Interface Design / Information Architecture",
+    scope: "Chat Workspace / Memory Graph / Research Views",
+    status: "Open-source Public Beta",
+    intro: "A research workspace for a stock-market agent with memory. Conversation, market context and past research stay within reach as a question develops.",
+    introCn: "为有记忆的股市 Agent 设计研究工作台。对话负责提出问题，行情面板补充当前语境，历史与记忆图谱帮助找回过去的研究和判断。",
+    links: [{ href: "https://github.com/jiuyang5354/Stoa", label: "VIEW ON GITHUB" }],
+    cover: image("stoa/workspace.webp", "Stoa 主界面，含对话入口、任务建议和右侧行情面板", "Research workspace", "Stoa / Product screenshot", "wide"),
+    chapters: [
+      {
+        title: "FROM QUESTION TO CONTEXT.",
+        titleCn: "从一个问题出发，把上下文放在手边。",
+        body: "The home screen brings common research tasks next to the chat input. The memory graph connects stocks, themes, conversations and past judgement records so users can return to the context behind a decision.",
+        images: [
+          image("stoa/workspace.webp", "Stoa 对话工作台与行情面板", "Chat workspace", "Prompt entry / Market context", "wide"),
+          image("stoa/memory-graph.webp", "Stoa 记忆图谱、主题列表和右侧详情摘要", "Memory graph", "Topics / Conversations / Judgement records", "wide"),
+        ],
+      },
+      {
+        title: "MAKE THE EVIDENCE READABLE.",
+        titleCn: "把研究线索整理成可读的图表。",
+        body: "The research views use tables, comparison bars and time-series charts to give financial indicators and report sections a consistent hierarchy.",
+        images: [
+          image("stoa/fundamentals.webp", "Stoa 基本面视图里的信号条、财务表格和评分图", "Fundamentals", "Tables / Comparison bars"),
+          image("stoa/quant-report.webp", "Stoa 量化报告中的趋势图、对照曲线和柱形图", "Quantitative report", "Time series / Benchmarks", "board"),
+        ],
+      },
+    ],
+    closing: "Stoa is a public-beta, self-hosted project. The case documents the interface through screenshots from the public repository.",
+    closingCn: "Stoa 是自托管的开源公测项目。这里展示的是 GitHub 仓库发布的界面截图，重点是对话、记忆与资料如何组织。",
+  },
+  {
+    slug: "margin",
+    title: "MARGIN",
+    titleCn: "映间 · B 站网页界面重设计",
+    discipline: "Web Design / Interaction Design",
+    year: "2026",
+    role: "Web Interface Design / Interaction Design",
+    scope: "Homepage / Video Page / Search / Favorites",
+    status: "Open-source Browser Extension",
+    intro: "A browser extension that redesigns Bilibili’s feed, search and favorites with light and dark themes while keeping the native player. The GitHub repository has nearly 1,000 stars, and the Bilibili showcase video has around 170,000 views.",
+    introCn: "以浏览器扩展重做 B 站网页界面，重新编排推荐流、搜索和收藏，提供深浅主题并保留原生播放器。GitHub 开源仓库获近千颗星标，B 站项目视频约 17 万次播放。",
+    links: [
+      { href: "https://github.com/jiuyang5354/bilibili-margin", label: "GitHub · 近千星仓库" },
+      { href: "https://www.bilibili.com/video/BV1CoxY6YE4y/", label: "B 站视频 · 17 万播放" },
+    ],
+    cover: image("margin/home-dark.webp", "映间 MARGIN 深色首页的推荐网格、动态背景和足迹热力图", "Bilibili homepage redesign", "MARGIN / Product screenshot", "wide"),
+    chapters: [
+      {
+        title: "GIVE THE FEED ROOM.",
+        titleCn: "用留白和网格重新组织首页。",
+        body: "A compact navigation area and generous video grid give the feed a clearer hierarchy. The activity heatmap and theme controls fit into the same layout in both light and dark modes.",
+        images: [
+          image("margin/home-light.webp", "映间浅色首页的推荐网格和足迹热力图", "Light homepage", "Recommendation grid / Activity heatmap", "wide"),
+          image("margin/home-dark.webp", "映间深色首页的蓝色背景与推荐流", "Dark homepage", "Dark theme / Dynamic background", "wide"),
+        ],
+      },
+      {
+        title: "FROM BROWSING TO WATCHING.",
+        titleCn: "找视频、打开收藏、继续观看。",
+        body: "The redesigned watch page keeps the native player and danmaku. Search results, the command palette and the favorites drawer give frequent actions dedicated layouts without breaking the browsing flow.",
+        images: [
+          image("margin/watch.webp", "映间播放页重排标题、原生播放器和右侧推荐", "Watch page", "Native player / Reorganised sidebar", "wide"),
+          image("margin/search.webp", "映间搜索结果的内容分区与视频卡片", "Search results", "Search layout / Result hierarchy", "wide"),
+          image("margin/command-palette.webp", "映间命令面板的搜索联想和快捷命令", "Command palette", "Search suggestions / Quick actions", "wide"),
+          image("margin/favorites.webp", "映间收藏抽屉中的半透明文件夹卡片", "Favorites drawer", "Glass folders / Saved videos", "wide"),
+        ],
+      },
+    ],
+    closing: "MARGIN is an independent, open-source browser extension for Edge, Chrome and Firefox. The screenshots come from the project’s public repository.",
+    closingCn: "映间是面向 Edge、Chrome 和 Firefox 的独立开源扩展。这里使用仓库发布的产品截图展示网页排版与操作流程。",
   },
 ];
 

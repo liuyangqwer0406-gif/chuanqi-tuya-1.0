@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import styles from "./film-footer.module.css";
 
 // Noise field adapted from kedhareswer's Noise Dissolve Reveal (21st demo 28906).
-// A spatial, scroll-driven dissolve replaces its full-page timed reveal.
+// Slow drift and staggered waves keep the grain moving across the footer seam.
 const vertex = `#version 300 es
 in vec2 a_position;
 out vec2 v_uv;
@@ -19,6 +19,7 @@ in vec2 v_uv;
 out vec4 fragColor;
 uniform vec2 u_resolution;
 uniform float u_progress;
+uniform float u_time;
 uniform vec3 u_color;
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21) + 17.0);
@@ -43,10 +44,13 @@ float fbm(vec2 p) {
 void main() {
   vec2 pixel = vec2(v_uv.x, 1.0 - v_uv.y) * u_resolution;
   float y = 1.0 - v_uv.y;
-  float cloud = fbm(pixel / 34.0 + vec2(u_progress * 0.45, 0));
-  float density = 1.0 - smoothstep(0.08, 0.94, y + (cloud - 0.5) * 0.36);
-  // Stable, fine grains with coarser clusters; no frame-to-frame random flicker.
-  float grain = mix(hash(floor(pixel / 1.4)), noise(pixel / 3.5), 0.28);
+  vec2 drift = vec2(-u_time * 4.5 + u_progress * 15.3, u_time * 1.7);
+  float cloud = fbm((pixel + drift) / 34.0);
+  float wave = sin(pixel.x * 0.011 - u_time * 1.12) * 0.041
+    + sin(pixel.x * 0.023 - u_time * 0.72) * 0.016;
+  float density = 1.0 - smoothstep(0.08, 0.94, y + (cloud - 0.5) * 0.36 + wave);
+  // Keep the fine grain anchored and advect the soft clusters.
+  float grain = mix(hash(floor(pixel / 1.4)), noise((pixel + drift) / 3.5), 0.28);
   float alpha = smoothstep(grain - 0.045, grain + 0.045, density);
   alpha = mix(1.0, alpha, smoothstep(0.0, 0.14, y));
   alpha *= 1.0 - smoothstep(0.90, 1.0, y);
@@ -68,8 +72,16 @@ export function FooterDissolve() {
     let frame = 0;
     let visible = false;
     let lost = false;
-    const dispose = () => {
+    let measure = true;
+    let elapsed = 0;
+    let lastTime: number | undefined;
+    const pause = () => {
       cancelAnimationFrame(frame);
+      frame = 0;
+      lastTime = undefined;
+    };
+    const dispose = () => {
+      pause();
       gl.deleteBuffer(buffer);
       gl.deleteProgram(program);
       shaders.forEach(shader => gl.deleteShader(shader));
@@ -95,6 +107,7 @@ export function FooterDissolve() {
     gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
     const resolution = gl.getUniformLocation(program, "u_resolution");
     const progress = gl.getUniformLocation(program, "u_progress");
+    const time = gl.getUniformLocation(program, "u_time");
     // Resolve the site's CSS colour through Canvas rather than approximating it.
     const colourCanvas = document.createElement("canvas");
     colourCanvas.width = colourCanvas.height = 1;
@@ -104,41 +117,59 @@ export function FooterDissolve() {
     const rgb = colourContext.getImageData(0, 0, 1, 1).data;
     gl.uniform3f(gl.getUniformLocation(program, "u_color"), rgb[0] / 255, rgb[1] / 255, rgb[2] / 255);
 
-    const draw = () => {
+    const draw = (now: number) => {
       frame = 0;
       if (!visible || document.hidden || lost) return;
-      const bounds = canvas.getBoundingClientRect();
-      const ratio = Math.min(devicePixelRatio, 1.5);
-      const width = Math.max(1, Math.round(bounds.width * ratio));
-      const height = Math.max(1, Math.round(bounds.height * ratio));
-      if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
-      gl.viewport(0, 0, width, height);
-      gl.uniform2f(resolution, bounds.width, bounds.height);
-      gl.uniform1f(progress, reduced.matches ? 0.5 : Math.max(0, Math.min(1, 1 - bounds.top / innerHeight)));
+      if (measure) {
+        measure = false;
+        const bounds = canvas.getBoundingClientRect();
+        if (!bounds.width || !bounds.height) return;
+        const ratio = Math.min(devicePixelRatio, 1.5, Math.sqrt(720_000 / (bounds.width * bounds.height)));
+        const width = Math.max(1, Math.floor(bounds.width * ratio));
+        const height = Math.max(1, Math.floor(bounds.height * ratio));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+          gl.viewport(0, 0, width, height);
+        }
+        gl.uniform2f(resolution, bounds.width, bounds.height);
+        gl.uniform1f(progress, reduced.matches ? 0.5 : Math.max(0, Math.min(1, 1 - bounds.top / innerHeight)));
+      }
+      if (!reduced.matches) {
+        if (lastTime !== undefined) elapsed += Math.min(now - lastTime, 50) / 1000;
+        lastTime = now;
+      }
+      gl.uniform1f(time, reduced.matches ? 0 : elapsed);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
-      canvas.dataset.ready = "true";
+      if (!canvas.dataset.ready) canvas.dataset.ready = "true";
+      if (!reduced.matches) schedule();
     };
     const schedule = () => { if (visible && !document.hidden && !lost && !frame) frame = requestAnimationFrame(draw); };
-    const onScroll = () => { if (!reduced.matches) schedule(); };
-    const onLost = () => { lost = true; cancelAnimationFrame(frame); frame = 0; delete canvas.dataset.ready; };
+    const updateBounds = () => { measure = true; schedule(); };
+    const onScroll = () => { if (!reduced.matches) updateBounds(); };
+    const onMotionChange = () => { pause(); updateBounds(); };
+    const onVisibilityChange = () => { if (document.hidden) pause(); else updateBounds(); };
+    const onLost = () => { lost = true; pause(); delete canvas.dataset.ready; };
     const observer = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
-      if (visible) schedule();
-      else { cancelAnimationFrame(frame); frame = 0; }
+      if (visible) updateBounds();
+      else pause();
     });
-    const resize = new ResizeObserver(schedule);
+    const resize = new ResizeObserver(updateBounds);
     observer.observe(canvas);
     resize.observe(canvas);
     window.addEventListener("scroll", onScroll, { passive: true });
-    document.addEventListener("visibilitychange", schedule);
-    reduced.addEventListener("change", schedule);
+    window.addEventListener("resize", updateBounds);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    reduced.addEventListener("change", onMotionChange);
     canvas.addEventListener("webglcontextlost", onLost);
     return () => {
       observer.disconnect();
       resize.disconnect();
       window.removeEventListener("scroll", onScroll);
-      document.removeEventListener("visibilitychange", schedule);
-      reduced.removeEventListener("change", schedule);
+      window.removeEventListener("resize", updateBounds);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      reduced.removeEventListener("change", onMotionChange);
       canvas.removeEventListener("webglcontextlost", onLost);
       dispose();
     };

@@ -149,6 +149,8 @@ export function FilmFooter({ isHome }: { isHome: boolean }) {
             </nav>
             <nav className={styles.column} aria-labelledby="film-footer-projects">
               <h2 className={styles.columnTitle} id="film-footer-projects">Projects<span>作品</span></h2>
+              <TransitionLink href="/synthesis/projects/stoa">Stoa</TransitionLink>
+              <TransitionLink href="/synthesis/projects/margin">映间 MARGIN</TransitionLink>
               <TransitionLink href="/synthesis/projects/roku-ikition">Roku Ikition</TransitionLink>
               <TransitionLink href="/synthesis/projects/packaging-design">Packaging</TransitionLink>
               <TransitionLink href="/synthesis/projects/runes">Runes</TransitionLink>
